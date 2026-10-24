@@ -482,11 +482,15 @@ function requestGeo(cb){
 }
 
 function activateOpenNow(){
+  // Always render immediately (shows results with fallback location)
+  render();
+  // Then try to get real location if we haven't yet
   if(!geoRequested){
     geoRequested=true;
-    requestGeo(()=>render());
-  } else {
-    render();
+    requestGeo(pos=>{
+      // Re-render with real location if we're still in Open Now mode
+      if(activecat==='open-now') render();
+    });
   }
 }
 
@@ -627,7 +631,7 @@ function render(){
       if(db===null)return -1;
       return da-db;
     });
-    const locLabel=userPos?'near you':'near Columbia'
+    const locLabel=userPos?'near you':'near Columbia (allow location for your address)'
     resBar.textContent=f.length?`${f.length} open right now · sorted by distance ${locLabel}`:'';
     if(!f.length){
       listEl.innerHTML=`<div class="empty"><div class="empty-icon">🟢</div><h3>Nothing with known hours is open right now</h3><p>Try calling a resource directly — many operate on flexible schedules.</p></div>`;
