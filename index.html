@@ -33,21 +33,19 @@
   .font-toggle.active{background:rgba(255,255,255,.22);color:#fff;border-color:rgba(255,255,255,.4)}
 
   /* ── ACCESSIBILITY: FONT SIZE LEVELS ── */
-  body.text-lg .card-name{font-size:1.2rem}
-  body.text-lg .card-service{font-size:.95rem}
-  body.text-lg .meta-row{font-size:.88rem}
-  body.text-lg .cat-tile-name{font-size:1.15rem}
-  body.text-lg .cat-tile-count{font-size:.85rem}
-  body.text-lg .pill{font-size:.82rem}
-  body.text-lg .results-bar{font-size:.88rem}
+  body.text-lg{font-size:110%}
+  body.text-lg .card-name{font-size:1.25rem}
+  body.text-lg .card-service{font-size:1rem}
+  body.text-lg .meta-row{font-size:.9rem}
+  body.text-lg .cat-tile-name{font-size:1.2rem}
+  body.text-lg .pill{font-size:.88rem;padding:7px 16px}
 
-  body.text-xl .card-name{font-size:1.35rem}
-  body.text-xl .card-service{font-size:1.05rem}
-  body.text-xl .meta-row{font-size:.96rem}
-  body.text-xl .cat-tile-name{font-size:1.25rem}
-  body.text-xl .cat-tile-count{font-size:.92rem}
-  body.text-xl .pill{font-size:.9rem}
-  body.text-xl .results-bar{font-size:.95rem}
+  body.text-xl{font-size:120%}
+  body.text-xl .card-name{font-size:1.45rem}
+  body.text-xl .card-service{font-size:1.1rem}
+  body.text-xl .meta-row{font-size:1rem}
+  body.text-xl .cat-tile-name{font-size:1.35rem}
+  body.text-xl .pill{font-size:.96rem;padding:8px 18px}
   /* Large text mode */
   body.large-text .card-name{font-size:1.25rem}
   body.large-text .card-service{font-size:1rem}
@@ -832,31 +830,27 @@ window.addEventListener('resize',()=>{
 
 // ── INIT ──
 // ── FONT SIZE TOGGLE ──
-const FONT_LEVELS=['','text-lg','text-xl'];
-const FONT_LABELS=['A+','A++','A'];
-const FONT_TITLES=['Increase text size','Increase text size more','Reset text size'];
 let fontLevel=0;
-function toggleFontSize(){
-  document.body.classList.remove(FONT_LEVELS[fontLevel]);
-  fontLevel=(fontLevel+1)%3;
-  if(FONT_LEVELS[fontLevel])document.body.classList.add(FONT_LEVELS[fontLevel]);
+function applyFontLevel(level){
+  document.body.classList.remove('text-lg','text-xl');
+  if(level===1)document.body.classList.add('text-lg');
+  if(level===2)document.body.classList.add('text-xl');
   const btn=document.getElementById('fontToggleBtn');
-  btn.textContent=FONT_LABELS[fontLevel];
-  btn.title=FONT_TITLES[fontLevel];
-  btn.classList.toggle('active',fontLevel>0);
-  try{localStorage.setItem('mcrd26-font',fontLevel)}catch{}
+  const labels=['A+','A++','A↺'];
+  const titles=['Make text larger','Make text even larger','Reset text size'];
+  btn.textContent=labels[level];
+  btn.title=titles[level];
+  btn.classList.toggle('active',level>0);
+}
+function toggleFontSize(){
+  fontLevel=(fontLevel+1)%3;
+  applyFontLevel(fontLevel);
+  try{localStorage.setItem('mcrd26-font',String(fontLevel))}catch{}
 }
 (function initFont(){
   try{
-    const saved=parseInt(localStorage.getItem('mcrd26-font')||'0');
-    if(saved>0&&saved<3){
-      fontLevel=saved;
-      document.body.classList.add(FONT_LEVELS[fontLevel]);
-      const btn=document.getElementById('fontToggleBtn');
-      btn.textContent=FONT_LABELS[fontLevel];
-      btn.title=FONT_TITLES[fontLevel];
-      btn.classList.add('active');
-    }
+    const saved=parseInt(localStorage.getItem('mcrd26-font')||'0',10);
+    if(saved===1||saved===2){fontLevel=saved;applyFontLevel(fontLevel);}
   }catch{}
 })();
 
