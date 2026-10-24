@@ -51,6 +51,19 @@
 
   /* ── CARDS ── */
   .cards{padding:4px 12px 80px;display:flex;flex-direction:column;gap:10px}
+
+  /* Desktop grouped layout */
+  @media(min-width:900px){
+    .cards{padding:16px 24px 80px;gap:0}
+    .section-group{margin-bottom:40px}
+    .section-heading{font-family:'DM Serif Display',serif;font-size:1.3rem;color:var(--ink);padding:10px 0 12px;border-bottom:2px solid var(--border);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+    .section-heading .cat-badge{font-size:.7rem}
+    .section-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  }
+  @media(min-width:1200px){
+    .section-cards{grid-template-columns:repeat(4,1fr)}
+  }
+
   .card{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);padding:16px;box-shadow:var(--shadow);animation:fadeUp .25s ease both}
   .card.stale{border-left:3px solid var(--yellow)}
   @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
@@ -372,35 +385,62 @@ function catLabel(c){return{food:'Food',housing:'Housing',mental:'Mental Health'
 const IC={clock:`<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>`,pin:`<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`,phone:`<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4 2 2 0 0 1 3.6 1.22h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.9a16 16 0 0 0 6.09 6.09l.95-.95a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 21.73 16.92z"/></svg>`,req:`<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>`,cal:`<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,globe:`<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`};
 
 // ── RENDER ──
+const CAT_ORDER=['food','housing','mental','finance','child','clothing','career','transit','medical','veterans','community'];
+const CAT_EMOJI={food:'🍎',housing:'🏠',mental:'🧠',finance:'💰',child:'👶',clothing:'👕',career:'💼',transit:'🚌',medical:'🏥',veterans:'🎖',community:'🤝'};
+
+function cardHTML(d,i){
+  const ONE_YR=365*24*60*60*1000,now=Date.now();
+  const stale=d.verified&&(now-new Date(d.verified).getTime())>ONE_YR;
+  const ver=d.verified?new Date(d.verified).toLocaleDateString('en-US',{month:'short',year:'numeric'}):'';
+  const ph=d.phone?d.phone.replace(/[^0-9+]/g,''):'';
+  return `<div class="card${stale?' stale':''}" style="animation-delay:${Math.min(i*.04,.4)}s">
+    <div class="card-top">
+      <div class="card-name">${d.name}</div>
+      <div class="card-badges">
+        <span class="cat-badge ${catClass(d.cat)}">${catLabel(d.cat)}</span>
+        ${isAdmin?`<button class="card-edit-btn" onclick="openForm(${d.id})">Edit</button>`:''}
+      </div>
+    </div>
+    <div class="card-service">${d.service}</div>
+    <div class="card-meta">
+      ${d.hours?`<div class="meta-row">${IC.clock}<span><span class="meta-label">Hours:</span>${d.hours}</span></div>`:''}
+      ${d.address?`<div class="meta-row">${IC.pin}<span>${d.address}</span></div>`:''}
+      ${d.phone?`<div class="meta-row">${IC.phone}<span><a href="tel:${ph}">${d.phone}</a></span></div>`:''}
+      ${d.web?`<div class="meta-row">${IC.globe}<span><a href="${d.web.startsWith('http')?d.web:'https://'+d.web}" target="_blank" rel="noopener">${d.web.replace(/^https?:\/\//,'')}</a></span></div>`:''}
+      <div class="meta-row">${IC.req}<span><span class="meta-label">Requirements:</span>${d.req==='none'?'<span class="req-none">None</span>':d.req}</span></div>
+      ${ver?`<div class="meta-row">${IC.cal}<span style="color:${stale?'var(--yellow)':'var(--ink-soft)'}"><span class="meta-label">Verified:</span>${ver}${stale?' · needs update':''}</span></div>`:''}
+    </div>
+  </div>`;
+}
+
 function render(){
   const q=query.toLowerCase();
   const f=data.filter(d=>(activecat==='all'||d.cat===activecat)&&(!q||[d.name,d.service,d.address,d.req,d.phone].join(' ').toLowerCase().includes(q)));
   document.getElementById('results-bar').textContent=f.length?`${f.length} resource${f.length!==1?'s':''} found`:'';
   const el=document.getElementById('cards');
   if(!f.length){el.innerHTML=`<div class="empty"><div class="empty-icon">🔍</div><h3>No results found</h3><p>Try a different search or category.</p></div>`;return}
-  const ONE_YR=365*24*60*60*1000,now=Date.now();
-  el.innerHTML=f.map((d,i)=>{
-    const stale=d.verified&&(now-new Date(d.verified).getTime())>ONE_YR;
-    const ver=d.verified?new Date(d.verified).toLocaleDateString('en-US',{month:'short',year:'numeric'}):'';
-    const ph=d.phone?d.phone.replace(/[^0-9+]/g,''):'';
-    return `<div class="card${stale?' stale':''}" style="animation-delay:${Math.min(i*.04,.4)}s">
-      <div class="card-top">
-        <div class="card-name">${d.name}</div>
-        <div class="card-badges">
-          <span class="cat-badge ${catClass(d.cat)}">${catLabel(d.cat)}</span>
-          ${isAdmin?`<button class="card-edit-btn" onclick="openForm(${d.id})">Edit</button>`:''}
+
+  const isDesktop=window.innerWidth>=900;
+  const isGrouped=activecat==='all'&&!q&&isDesktop;
+
+  if(isGrouped){
+    // Group by category, render as sections
+    const groups={};
+    f.forEach(d=>{if(!groups[d.cat])groups[d.cat]=[];groups[d.cat].push(d)});
+    el.innerHTML=CAT_ORDER.filter(c=>groups[c]).map(c=>{
+      const items=groups[c];
+      return `<div class="section-group">
+        <div class="section-heading">
+          ${CAT_EMOJI[c]||''} ${catLabel(c)}
+          <span class="cat-badge ${catClass(c)}" style="margin-left:4px">${items.length}</span>
         </div>
-      </div>
-      <div class="card-service">${d.service}</div>
-      <div class="card-meta">
-        ${d.hours?`<div class="meta-row">${IC.clock}<span><span class="meta-label">Hours:</span>${d.hours}</span></div>`:''}
-        ${d.address?`<div class="meta-row">${IC.pin}<span>${d.address}</span></div>`:''}
-        ${d.phone?`<div class="meta-row">${IC.phone}<span><a href="tel:${ph}">${d.phone}</a></span></div>`:''}
-        ${d.web?`<div class="meta-row">${IC.globe}<span><a href="${d.web.startsWith('http')?d.web:'https://'+d.web}" target="_blank" rel="noopener">${d.web.replace(/^https?:\/\//,'')}</a></span></div>`:''}
-        <div class="meta-row">${IC.req}<span><span class="meta-label">Requirements:</span>${d.req==='none'?'<span class="req-none">None</span>':d.req}</span></div>
-        ${ver?`<div class="meta-row">${IC.cal}<span style="color:${stale?'var(--yellow)':'var(--ink-soft)'}"><span class="meta-label">Verified:</span>${ver}${stale?' · needs update':''}</span></div>`:''}
-      </div>
-    </div>`}).join('');
+        <div class="section-cards">${items.map((d,i)=>cardHTML(d,i)).join('')}</div>
+      </div>`;
+    }).join('');
+  } else {
+    // Single-column list (mobile or filtered)
+    el.innerHTML=f.map((d,i)=>cardHTML(d,i)).join('');
+  }
 }
 
 // ── FILTER PILLS ──
@@ -472,6 +512,13 @@ function bgClose(e,id){if(e.target===document.getElementById(id))closeModal(id)}
   const el = document.getElementById('footer-note');
   if(el) el.textContent = `Source: TCFD Maury County Resource Guide · Last updated ${updated} · © ${yr} Maury County Resource Directory`;
 })();
+
+// ── RESIZE: re-render when crossing the desktop breakpoint ──
+let _lastDesktop=window.innerWidth>=900;
+window.addEventListener('resize',()=>{
+  const d=window.innerWidth>=900;
+  if(d!==_lastDesktop){_lastDesktop=d;render();}
+});
 
 // ── INIT ──
 loadData();render();
