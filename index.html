@@ -560,21 +560,28 @@ function cardHTML(d,i){
   const stale=d.verified&&(now-new Date(d.verified).getTime())>ONE_YR;
   const ver=d.verified?new Date(d.verified).toLocaleDateString('en-US',{month:'short',year:'numeric'}):'';
   const ph=d.phone?d.phone.replace(/[^0-9+]/g,''):'';
-  // Distance + schedule badges (shown on all cards)
+  // One contextual badge: Open Now > opens within 48h > distance (only in Open Now mode) > nothing
   const mi=distMi(d);
-  const dl=distLabel(mi);
   const info=nextOpenInfo(d);
-  const distBadge=dl?`<span class="dist-badge ${dl.cls}">${dl.label}</span>`:'';
-  const schedBadge=info.label?(info.bucket===0
-    ?`<span class="open-badge">${info.label}</span>`
-    :`<span class="sched-badge">${info.label}</span>`):'';
+  const openNowMode=(activecat==='open-now');
+  let contextBadge='';
+  if(info.bucket===0){
+    contextBadge=`<span class="open-badge">🟢 Open Now</span>`;
+  } else if(info.bucket===1||(info.bucket===2&&info.minutesAway<=48*60)){
+    // Opens today or within 48 hours — actionable
+    contextBadge=`<span class="sched-badge">${info.label}</span>`;
+  } else if(openNowMode&&mi!==null){
+    const dl=distLabel(mi);
+    if(dl)contextBadge=`<span class="dist-badge ${dl.cls}">${dl.label}</span>`;
+  }
+  // Category badge: hide in single-category drill-in views (redundant); show in all/search
+  const showCatBadge=(activecat==='all'||openNowMode||!!query);
   return `<div class="card${stale?' stale':''}" style="animation-delay:${Math.min(i*.04,.4)}s">
     <div class="card-top">
       <div class="card-name">${d.name}</div>
       <div class="card-badges">
-        ${schedBadge}
-        ${distBadge}
-        <span class="cat-badge ${catClass(d.cat)}">${catLabel(d.cat)}</span>
+        ${contextBadge}
+        ${showCatBadge?`<span class="cat-badge ${catClass(d.cat)}">${catLabel(d.cat)}</span>`:''}
         ${isAdmin?`<button class="card-edit-btn" onclick="openForm(${d.id})">Edit</button>`:''}
       </div>
     </div>
