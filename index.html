@@ -52,16 +52,32 @@
   /* ── CARDS ── */
   .cards{padding:4px 12px 80px;display:flex;flex-direction:column;gap:10px}
 
-  /* Desktop grouped layout */
-  @media(min-width:900px){
-    .cards{padding:16px 24px 80px;gap:0}
-    .section-group{margin-bottom:40px}
-    .section-heading{font-family:'DM Serif Display',serif;font-size:1.3rem;color:var(--ink);padding:10px 0 12px;border-bottom:2px solid var(--border);margin-bottom:14px;display:flex;align-items:center;gap:8px}
-    .section-heading .cat-badge{font-size:.7rem}
-    .section-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-  }
-  @media(min-width:1200px){
-    .section-cards{grid-template-columns:repeat(4,1fr)}
+  /* ── CATEGORY TILE HOME (desktop default) ── */
+  .cat-home{padding:24px 24px 80px}
+  .cat-home-title{font-family:'DM Serif Display',serif;font-size:1.5rem;color:var(--ink);margin-bottom:4px}
+  .cat-home-sub{font-size:.85rem;color:var(--ink-soft);margin-bottom:28px}
+  .cat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  @media(min-width:1100px){.cat-grid{grid-template-columns:repeat(4,1fr)}}
+  .cat-tile{background:var(--card);border:1.5px solid var(--border);border-radius:14px;padding:22px 18px;display:flex;flex-direction:column;align-items:flex-start;cursor:pointer;transition:all .18s;box-shadow:var(--shadow)}
+  .cat-tile:hover{border-color:var(--accent);background:var(--accent-light);transform:translateY(-2px);box-shadow:var(--shadow-hover)}
+  .cat-tile-emoji{font-size:1.8rem;margin-bottom:10px;line-height:1}
+  .cat-tile-name{font-family:'DM Serif Display',serif;font-size:1.05rem;color:var(--ink);margin-bottom:4px}
+  .cat-tile-count{font-size:.78rem;color:var(--ink-soft)}
+  .cat-tile-arrow{margin-top:14px;font-size:.78rem;color:var(--accent);font-weight:600;letter-spacing:.02em}
+
+  /* ── CATEGORY DRILL-IN VIEW ── */
+  .cat-view{padding:0 24px 80px}
+  .cat-view-header{display:flex;align-items:center;gap:12px;padding:18px 0 14px;border-bottom:2px solid var(--border);margin-bottom:18px}
+  .back-btn{background:none;border:1.5px solid var(--border);color:var(--ink-soft);font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:600;padding:6px 14px;border-radius:8px;cursor:pointer;letter-spacing:.02em;transition:all .15s;display:flex;align-items:center;gap:6px}
+  .back-btn:hover{border-color:var(--ink-soft);color:var(--ink)}
+  .cat-view-title{font-family:'DM Serif Display',serif;font-size:1.4rem;color:var(--ink);display:flex;align-items:center;gap:8px}
+  .cat-view-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  @media(min-width:1200px){.cat-view-cards{grid-template-columns:repeat(4,1fr)}}
+
+  /* Mobile: tile home is hidden, cards stay single-col */
+  @media(max-width:899px){
+    .cat-home,.cat-view{display:none!important}
+    .cards{padding:4px 12px 80px}
   }
 
   .card{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);padding:16px;box-shadow:var(--shadow);animation:fadeUp .25s ease both}
@@ -181,7 +197,26 @@
 </div>
 
 <div class="results-bar" id="results-bar"></div>
+
+<!-- DESKTOP: Category tile home -->
+<div class="cat-home" id="catHome" style="display:none">
+  <div class="cat-home-title">Maury County Resources</div>
+  <div class="cat-home-sub">86 resources across 11 categories — choose a category to get started.</div>
+  <div class="cat-grid" id="catGrid"></div>
+</div>
+
+<!-- DESKTOP: Category drill-in view -->
+<div class="cat-view" id="catView" style="display:none">
+  <div class="cat-view-header">
+    <button class="back-btn" onclick="goHome()">← All Categories</button>
+    <div class="cat-view-title" id="catViewTitle"></div>
+  </div>
+  <div class="cat-view-cards" id="catViewCards"></div>
+</div>
+
+<!-- MOBILE / search results: plain card list -->
 <div class="cards" id="cards"></div>
+
 <p class="footer-note" id="footer-note"></p>
 
 <!-- LOGIN MODAL -->
@@ -372,7 +407,7 @@ const SEED = [
 ];
 
 // ── STATE ──
-let data=[], activecat='all', query='', isAdmin=false, editingId=null, pendingDeleteId=null;
+let data=[], activecat='all', query='', isAdmin=false, editingId=null, pendingDeleteId=null, desktopView='home';
 
 // ── STORAGE ──
 function loadData(){try{const s=localStorage.getItem('mcrd26');data=s?JSON.parse(s):JSON.parse(JSON.stringify(SEED))}catch{data=JSON.parse(JSON.stringify(SEED))}}
@@ -413,42 +448,101 @@ function cardHTML(d,i){
   </div>`;
 }
 
+function goHome(){
+  desktopView='home';
+  // Reset pill to All
+  document.querySelectorAll('.pill').forEach(x=>x.classList.remove('active'));
+  document.querySelector('.pill[data-cat="all"]').classList.add('active');
+  activecat='all';
+  render();
+}
+
+function drillInto(cat){
+  desktopView='category';
+  activecat=cat;
+  // Sync pill
+  document.querySelectorAll('.pill').forEach(x=>x.classList.remove('active'));
+  const p=document.querySelector(`.pill[data-cat="${cat}"]`);
+  if(p)p.classList.add('active');
+  render();
+}
+
+function renderTileHome(){
+  const counts={};
+  data.forEach(d=>{counts[d.cat]=(counts[d.cat]||0)+1});
+  document.getElementById('catGrid').innerHTML=CAT_ORDER.map(c=>{
+    const n=counts[c]||0;
+    return `<div class="cat-tile" onclick="drillInto('${c}')">
+      <div class="cat-tile-emoji">${CAT_EMOJI[c]||'📋'}</div>
+      <div class="cat-tile-name">${catLabel(c)}</div>
+      <div class="cat-tile-count">${n} resource${n!==1?'s':''}</div>
+      <div class="cat-tile-arrow">Browse →</div>
+    </div>`;
+  }).join('');
+}
+
 function render(){
-  const q=query.toLowerCase();
-  const f=data.filter(d=>(activecat==='all'||d.cat===activecat)&&(!q||[d.name,d.service,d.address,d.req,d.phone].join(' ').toLowerCase().includes(q)));
-  document.getElementById('results-bar').textContent=f.length?`${f.length} resource${f.length!==1?'s':''} found`:'';
-  const el=document.getElementById('cards');
-  if(!f.length){el.innerHTML=`<div class="empty"><div class="empty-icon">🔍</div><h3>No results found</h3><p>Try a different search or category.</p></div>`;return}
-
   const isDesktop=window.innerWidth>=900;
-  const isGrouped=activecat==='all'&&!q&&isDesktop;
+  const q=query.toLowerCase();
+  const searching=!!q;
+  const catFiltered=activecat!=='all';
 
-  if(isGrouped){
-    // Group by category, render as sections
-    const groups={};
-    f.forEach(d=>{if(!groups[d.cat])groups[d.cat]=[];groups[d.cat].push(d)});
-    el.innerHTML=CAT_ORDER.filter(c=>groups[c]).map(c=>{
-      const items=groups[c];
-      return `<div class="section-group">
-        <div class="section-heading">
-          ${CAT_EMOJI[c]||''} ${catLabel(c)}
-          <span class="cat-badge ${catClass(c)}" style="margin-left:4px">${items.length}</span>
-        </div>
-        <div class="section-cards">${items.map((d,i)=>cardHTML(d,i)).join('')}</div>
-      </div>`;
-    }).join('');
-  } else {
-    // Single-column list (mobile or filtered)
-    el.innerHTML=f.map((d,i)=>cardHTML(d,i)).join('');
+  // Show/hide containers
+  const homeEl=document.getElementById('catHome');
+  const viewEl=document.getElementById('catView');
+  const listEl=document.getElementById('cards');
+  const resBar=document.getElementById('results-bar');
+
+  if(isDesktop&&!searching&&!catFiltered&&desktopView==='home'){
+    // Desktop home: tile grid
+    homeEl.style.display='block';
+    viewEl.style.display='none';
+    listEl.style.display='none';
+    resBar.textContent='';
+    renderTileHome();
+    return;
   }
+
+  if(isDesktop&&!searching&&catFiltered){
+    // Desktop drill-in: card grid for a category
+    homeEl.style.display='none';
+    viewEl.style.display='block';
+    listEl.style.display='none';
+    const f=data.filter(d=>d.cat===activecat);
+    resBar.textContent='';
+    document.getElementById('catViewTitle').innerHTML=`${CAT_EMOJI[activecat]||''} ${catLabel(activecat)} <span class="cat-badge ${catClass(activecat)}" style="margin-left:6px;font-size:.7rem">${f.length}</span>`;
+    document.getElementById('catViewCards').innerHTML=f.length
+      ?f.map((d,i)=>cardHTML(d,i)).join('')
+      :`<div class="empty"><div class="empty-icon">📭</div><h3>No entries yet</h3><p>Add one via Admin.</p></div>`;
+    return;
+  }
+
+  // Mobile or search mode: plain card list
+  homeEl.style.display='none';
+  viewEl.style.display='none';
+  listEl.style.display='flex';
+
+  const f=data.filter(d=>(activecat==='all'||d.cat===activecat)&&(!q||[d.name,d.service,d.address,d.req,d.phone].join(' ').toLowerCase().includes(q)));
+  resBar.textContent=f.length?`${f.length} resource${f.length!==1?'s':''} found`:'';
+  if(!f.length){listEl.innerHTML=`<div class="empty"><div class="empty-icon">🔍</div><h3>No results found</h3><p>Try a different search or category.</p></div>`;return}
+  listEl.innerHTML=f.map((d,i)=>cardHTML(d,i)).join('');
 }
 
 // ── FILTER PILLS ──
-document.getElementById('search').addEventListener('input',e=>{query=e.target.value;render()});
+document.getElementById('search').addEventListener('input',e=>{
+  query=e.target.value;
+  // Clear cat filter when searching so results are broad
+  if(query){activecat='all';document.querySelectorAll('.pill').forEach(x=>x.classList.remove('active'));document.querySelector('.pill[data-cat="all"]').classList.add('active');}
+  render();
+});
 document.getElementById('filters').addEventListener('click',e=>{
   const p=e.target.closest('.pill');if(!p)return;
   document.querySelectorAll('.pill').forEach(x=>x.classList.remove('active'));
-  p.classList.add('active');activecat=p.dataset.cat;render();
+  p.classList.add('active');
+  activecat=p.dataset.cat;
+  query='';document.getElementById('search').value='';
+  if(activecat==='all'){desktopView='home';}else{desktopView='category';}
+  render();
 });
 
 // ── LOGIN ──
@@ -517,7 +611,12 @@ function bgClose(e,id){if(e.target===document.getElementById(id))closeModal(id)}
 let _lastDesktop=window.innerWidth>=900;
 window.addEventListener('resize',()=>{
   const d=window.innerWidth>=900;
-  if(d!==_lastDesktop){_lastDesktop=d;render();}
+  if(d!==_lastDesktop){
+    _lastDesktop=d;
+    // Entering desktop with no filter → show tile home
+    if(d&&activecat==='all'&&!query)desktopView='home';
+    render();
+  }
 });
 
 // ── INIT ──
