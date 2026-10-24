@@ -54,6 +54,7 @@
   .dist-nearby{background:var(--blue-light);color:var(--blue)}
   .dist-far{background:var(--yellow-light);color:var(--yellow)}
   .open-badge{display:inline-flex;align-items:center;gap:3px;font-size:.66rem;font-weight:600;padding:2px 7px;border-radius:999px;background:var(--green-light);color:var(--green)}
+.sched-badge{display:inline-flex;align-items:center;gap:3px;font-size:.66rem;font-weight:600;padding:2px 7px;border-radius:999px;background:var(--yellow-light);color:#92660a}
   /* Transit tip surfaced when org is far */
   .transit-tip{background:var(--blue-light);border:1px solid var(--blue);border-radius:10px;padding:10px 14px;font-size:.8rem;color:var(--blue);display:flex;align-items:center;gap:8px;margin-bottom:0}
   .transit-tip strong{color:var(--ink)}
@@ -462,7 +463,7 @@ function distLabel(mi){
 function isOpenNow(d){
   if(!d.schedule||!d.schedule.length)return false;
   const now=new Date();
-  const day=now.getDay(); // 0=Sun,1=Mon,...,6=Sat
+  const day=now.getDay();
   const hm=now.getHours()*60+now.getMinutes();
   return d.schedule.some(slot=>{
     if(!slot.days.includes(day))return false;
@@ -470,6 +471,58 @@ function isOpenNow(d){
     const [ch,cm]=slot.close.split(':').map(Number);
     return hm>=oh*60+om&&hm<=ch*60+cm;
   });
+}
+
+const DAY_NAMES=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+function fmt12(hhmm){
+  const [h,m]=hhmm.split(':').map(Number);
+  const ampm=h<12?'am':'pm';
+  const h12=h%12||12;
+  return m?`${h12}:${String(m).padStart(2,'0')}${ampm}`:`${h12}${ampm}`;
+}
+
+// Returns {bucket, minutesAway, label} for smart sorting and badge display
+// bucket: 0=open now, 1=opens later today, 2=opens this week, 3=no schedule, 4=no coords (for sort only)
+function nextOpenInfo(d){
+  if(!d.schedule||!d.schedule.length)return{bucket:3,minutesAway:Infinity,label:null};
+  const now=new Date();
+  const todayDay=now.getDay();
+  const nowMins=now.getHours()*60+now.getMinutes();
+  // Check if open right now
+  for(const slot of d.schedule){
+    if(!slot.days.includes(todayDay))continue;
+    const [oh,om]=slot.open.split(':').map(Number);
+    const [ch,cm]=slot.close.split(':').map(Number);
+    if(nowMins>=oh*60+om&&nowMins<=ch*60+cm)return{bucket:0,minutesAway:0,label:'🟢 Open Now'};
+  }
+  // Find next open window within the next 7 days
+  let bestMins=Infinity,bestLabel=null,bestBucket=2;
+  for(let delta=0;delta<7;delta++){
+    const checkDay=(todayDay+delta)%7;
+    for(const slot of d.schedule){
+      if(!slot.days.includes(checkDay))continue;
+      const [oh,om]=slot.open.split(':').map(Number);
+      const openMins=oh*60+om;
+      const totalMins=delta*1440+openMins-nowMins;
+      if(totalMins<=0)continue; // already passed today
+      if(totalMins<bestMins){
+        bestMins=totalMins;
+        const dayLabel=delta===0?'Today':delta===1?'Tomorrow':DAY_NAMES[checkDay];
+        bestLabel=`⏰ Opens ${dayLabel} ${fmt12(slot.open)}`;
+        bestBucket=delta===0?1:2;
+      }
+    }
+  }
+  return{bucket:bestBucket,minutesAway:bestMins,label:bestLabel};
+}
+
+function smartSortKey(d){
+  const info=nextOpenInfo(d);
+  const mi=distMi(d);
+  // If no coords at all, push to very bottom regardless of schedule
+  const distKey=mi!==null?mi:9999;
+  // bucket 0–3, then minutesAway (within bucket), then distance
+  return info.bucket*1e9+Math.min(info.minutesAway,99999)*10+distKey;
 }
 
 function requestGeo(cb){
@@ -482,15 +535,14 @@ function requestGeo(cb){
 }
 
 function activateOpenNow(){
-  // Always render immediately (shows results with fallback location)
-  render();
-  // Then try to get real location if we haven't yet
+  render(); // immediate render with fallback
+  ensureGeo();
+}
+
+function ensureGeo(){
   if(!geoRequested){
     geoRequested=true;
-    requestGeo(pos=>{
-      // Re-render with real location if we're still in Open Now mode
-      if(activecat==='open-now') render();
-    });
+    requestGeo(()=>render()); // re-render with real position once resolved
   }
 }
 
@@ -503,22 +555,24 @@ const IC={clock:`<svg width="13" height="13" fill="none" stroke="currentColor" s
 const CAT_ORDER=['food','housing','mental','finance','child','clothing','career','transit','medical','veterans','community'];
 const CAT_EMOJI={food:'🍎',housing:'🏠',mental:'🧠',finance:'💰',child:'👶',clothing:'👕',career:'💼',transit:'🚌',medical:'🏥',veterans:'🎖',community:'🤝'};
 
-function cardHTML(d,i,opts={}){
+function cardHTML(d,i){
   const ONE_YR=365*24*60*60*1000,now=Date.now();
   const stale=d.verified&&(now-new Date(d.verified).getTime())>ONE_YR;
   const ver=d.verified?new Date(d.verified).toLocaleDateString('en-US',{month:'short',year:'numeric'}):'';
   const ph=d.phone?d.phone.replace(/[^0-9+]/g,''):'';
-  // Distance badge
+  // Distance + schedule badges (shown on all cards)
   const mi=distMi(d);
   const dl=distLabel(mi);
-  const openNow=opts.showOpen?isOpenNow(d):false;
+  const info=nextOpenInfo(d);
   const distBadge=dl?`<span class="dist-badge ${dl.cls}">${dl.label}</span>`:'';
-  const openBadge=openNow?`<span class="open-badge">🟢 Open Now</span>`:'';
+  const schedBadge=info.label?(info.bucket===0
+    ?`<span class="open-badge">${info.label}</span>`
+    :`<span class="sched-badge">${info.label}</span>`):'';
   return `<div class="card${stale?' stale':''}" style="animation-delay:${Math.min(i*.04,.4)}s">
     <div class="card-top">
       <div class="card-name">${d.name}</div>
       <div class="card-badges">
-        ${openBadge}
+        ${schedBadge}
         ${distBadge}
         <span class="cat-badge ${catClass(d.cat)}">${catLabel(d.cat)}</span>
         ${isAdmin?`<button class="card-edit-btn" onclick="openForm(${d.id})">Edit</button>`:''}
@@ -605,11 +659,12 @@ function render(){
     homeEl.style.display='none';
     viewEl.style.display='block';
     listEl.style.display='none';
-    const f=data.filter(d=>d.cat===activecat);
+    const f=[...data.filter(d=>d.cat===activecat)].sort((a,b)=>smartSortKey(a)-smartSortKey(b));
+    const locLabel=userPos?'near you':'near Columbia';
     resBar.textContent='';
     document.getElementById('catViewTitle').innerHTML=`${CAT_EMOJI[activecat]||''} ${catLabel(activecat)} <span class="cat-badge ${catClass(activecat)}" style="margin-left:6px;font-size:.7rem">${f.length}</span>`;
     document.getElementById('catViewCards').innerHTML=f.length
-      ?f.map((d,i)=>cardHTML(d,i,{showOpen:false})).join('')
+      ?f.map((d,i)=>cardHTML(d,i)).join('')
       :`<div class="empty"><div class="empty-icon">📭</div><h3>No entries yet</h3><p>Add one via Admin.</p></div>`;
     return;
   }
@@ -621,41 +676,29 @@ function render(){
 
   let f;
   if(openNowMode){
-    // Filter to orgs with schedule data, check if open right now
-    f=data.filter(d=>isOpenNow(d));
-    // Sort by distance (ascending); no-location orgs go last
-    f.sort((a,b)=>{
-      const da=distMi(a),db=distMi(b);
-      if(da===null&&db===null)return 0;
-      if(da===null)return 1;
-      if(db===null)return -1;
-      return da-db;
-    });
-    const locLabel=userPos?'near you':'near Columbia (allow location for your address)'
+    f=data.filter(d=>isOpenNow(d)).sort((a,b)=>smartSortKey(a)-smartSortKey(b));
+    const locLabel=userPos?'near you':'near Columbia (allow location for your address)';
     resBar.textContent=f.length?`${f.length} open right now · sorted by distance ${locLabel}`:'';
     if(!f.length){
       listEl.innerHTML=`<div class="empty"><div class="empty-icon">🟢</div><h3>Nothing with known hours is open right now</h3><p>Try calling a resource directly — many operate on flexible schedules.</p></div>`;
       return;
     }
-    // Build cards, injecting transit tip after any "far" card
     const TRANSIT_IDS=new Set([59,60,61,62]);
     let html='';
     f.forEach((d,i)=>{
-      html+=cardHTML(d,i,{showOpen:true});
+      html+=cardHTML(d,i);
       const mi=distMi(d);
-      // Surface transit tip after first non-transit "far" org
-      if(mi!==null&&mi>2.5&&!TRANSIT_IDS.has(d.id)&&!html.includes('transit-tip')){
-        html+=transitTipHTML();
-      }
+      if(mi!==null&&mi>2.5&&!TRANSIT_IDS.has(d.id)&&!html.includes('transit-tip'))html+=transitTipHTML();
     });
     listEl.innerHTML=html;
     return;
   }
 
-  f=data.filter(d=>(activecat==='all'||d.cat===activecat)&&(!q||[d.name,d.service,d.address,d.req,d.phone].join(' ').toLowerCase().includes(q)));
+  f=[...data.filter(d=>(activecat==='all'||d.cat===activecat)&&(!q||[d.name,d.service,d.address,d.req,d.phone].join(' ').toLowerCase().includes(q)))];
+  if(!searching)f.sort((a,b)=>smartSortKey(a)-smartSortKey(b));
   resBar.textContent=f.length?`${f.length} resource${f.length!==1?'s':''} found`:'';
   if(!f.length){listEl.innerHTML=`<div class="empty"><div class="empty-icon">🔍</div><h3>No results found</h3><p>Try a different search or category.</p></div>`;return}
-  listEl.innerHTML=f.map((d,i)=>cardHTML(d,i,{showOpen:false})).join('');
+  listEl.innerHTML=f.map((d,i)=>cardHTML(d,i)).join('');
 }
 
 // ── FILTER PILLS ──
@@ -753,6 +796,8 @@ window.addEventListener('resize',()=>{
 
 // ── INIT ──
 loadData();render();
+// Silently request location on load so distance badges are ready when user browses
+ensureGeo();
 </script>
 </body>
 </html>
