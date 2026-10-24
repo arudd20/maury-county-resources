@@ -730,10 +730,17 @@ function render(){
   }
 
   f=[...data.filter(d=>(activecat==='all'||d.cat===activecat)&&(!q||[d.name,d.service,d.address,d.req,d.phone].join(' ').toLowerCase().includes(q)))];
-  if(!searching)f.sort((a,b)=>smartSortKey(a)-smartSortKey(b));
+  f.sort((a,b)=>smartSortKey(a)-smartSortKey(b));
   resBar.textContent=f.length?`${f.length} resource${f.length!==1?'s':''} found`:'';
   if(!f.length){listEl.innerHTML=`<div class="empty"><div class="empty-icon">🔍</div><h3>No results found</h3><p>Try a different search or category.</p></div>`;return}
-  listEl.innerHTML=f.map((d,i)=>cardHTML(d,i)).join('');
+  const TRANSIT_IDS=new Set([59,60,61,62]);
+  let html='';
+  f.forEach((d,i)=>{
+    html+=cardHTML(d,i);
+    const mi=distMi(d);
+    if(mi!==null&&mi>2.5&&!TRANSIT_IDS.has(d.id)&&!html.includes('transit-tip'))html+=transitTipHTML();
+  });
+  listEl.innerHTML=html;
 }
 
 // ── FILTER PILLS ──
