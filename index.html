@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maury County Resource Directory</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#f5f0e8;--card:#fffdf8;--ink:#1a1208;--ink-soft:#5a4f3a;
+    --accent:#c95f2a;--accent-light:#f5ddd0;
+    --green:#3a7d5a;--green-light:#d4ede0;
+    --blue:#2a5f8f;--blue-light:#d0e3f5;
+    --purple:#6b3fa0;--purple-light:#e8d8f8;
+    --yellow:#c9941a;--yellow-light:#faecd0;
+    --red:#b83232;--red-light:#f5d8d8;
+    --border:#e2d8c8;--radius:12px;
+    --shadow:0 2px 12px rgba(26,18,8,.08);
+    --shadow-hover:0 6px 24px rgba(26,18,8,.14);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh}
+
+  /* ── HEADER ── */
+  header{background:var(--ink);color:var(--bg);padding:20px 16px 14px;position:sticky;top:0;z-index:100;box-shadow:0 2px 20px rgba(0,0,0,.25)}
+  .header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  header h1{font-family:'DM Serif Display',serif;font-size:1.4rem;color:var(--bg);line-height:1.1}
+  .header-sub{font-size:.7rem;font-weight:300;color:#a89880;letter-spacing:.08em;text-transform:uppercase;margin-top:2px}
+  .admin-btn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#a89880;font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:500;padding:5px 12px;border-radius:6px;cursor:pointer;letter-spacing:.04em;text-transform:uppercase;transition:all .15s;flex-shrink:0}
+  .admin-btn:hover{background:rgba(255,255,255,.18);color:#fff}
+  .search-wrap{position:relative}
+  .search-wrap svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#a89880;pointer-events:none}
+  #search{width:100%;padding:11px 12px 11px 38px;border-radius:8px;border:none;background:rgba(255,255,255,.1);color:#fff;font-family:'DM Sans',sans-serif;font-size:.95rem;outline:none;transition:background .2s}
+  #search::placeholder{color:#a89880}
+  #search:focus{background:rgba(255,255,255,.16)}
+
+  /* ── ADMIN BAR ── */
+  .admin-bar{display:none;background:#fff7e0;border-bottom:2px solid var(--yellow);padding:10px 16px;gap:8px;align-items:center;flex-wrap:wrap;position:sticky;top:108px;z-index:89}
+  .admin-bar.visible{display:flex}
+  .admin-label{font-size:.75rem;font-weight:600;color:var(--yellow);letter-spacing:.04em;text-transform:uppercase;flex-shrink:0}
+
+  /* ── FILTERS ── */
+  .filters{padding:10px 16px;display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;background:var(--bg);border-bottom:1px solid var(--border);position:sticky;top:108px;z-index:88}
+  .admin-bar.visible ~ .filters{top:158px}
+  .filters::-webkit-scrollbar{display:none}
+  .pill{flex-shrink:0;padding:6px 14px;border-radius:999px;border:1.5px solid var(--border);background:var(--card);font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:500;cursor:pointer;transition:all .15s;white-space:nowrap;color:var(--ink-soft)}
+  .pill.active{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+  .pill:hover:not(.active){border-color:var(--ink-soft);color:var(--ink)}
+
+  .results-bar{padding:10px 16px 4px;font-size:.78rem;color:var(--ink-soft);font-weight:500}
+
+  /* ── CARDS ── */
+  .cards{padding:4px 12px 80px;display:flex;flex-direction:column;gap:10px}
+  .card{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);padding:16px;box-shadow:var(--shadow);animation:fadeUp .25s ease both}
+  .card.stale{border-left:3px solid var(--yellow)}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  .card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px}
+  .card-name{font-family:'DM Serif Display',serif;font-size:1.05rem;line-height:1.25;color:var(--ink);flex:1}
+  .card-badges{display:flex;align-items:center;gap:6px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end}
+  .cat-badge{padding:3px 9px;border-radius:999px;font-size:.68rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+  .cat-food{background:var(--yellow-light);color:var(--yellow)}
+  .cat-housing{background:var(--blue-light);color:var(--blue)}
+  .cat-mental{background:var(--purple-light);color:var(--purple)}
+  .cat-finance{background:var(--green-light);color:var(--green)}
+  .cat-child{background:var(--accent-light);color:var(--accent)}
+  .cat-career{background:#e8f0e8;color:#2d6e2d}
+  .cat-transit{background:#f0e8e8;color:#8f2a2a}
+  .cat-community{background:#e8e8f5;color:#3a3a8f}
+  .cat-clothing{background:#f5e8f0;color:#8f2a6b}
+  .cat-medical{background:#e8f5f5;color:#2a7a7a}
+  .cat-veterans{background:#f5f0e0;color:#7a5a1a}
+  .card-service{font-size:.85rem;color:var(--ink-soft);line-height:1.45;margin-bottom:10px}
+  .card-meta{display:flex;flex-direction:column;gap:4px}
+  .meta-row{display:flex;align-items:flex-start;gap:6px;font-size:.78rem;color:var(--ink-soft)}
+  .meta-row svg{flex-shrink:0;margin-top:1px;color:var(--accent)}
+  .meta-label{font-weight:600;color:var(--ink);margin-right:2px}
+  .req-none{display:inline-block;background:var(--green-light);color:var(--green);font-size:.68rem;font-weight:600;padding:2px 8px;border-radius:999px;margin-top:2px}
+  .card a{color:var(--accent);text-decoration:none;font-weight:500}
+  .card-edit-btn{background:none;border:1px solid var(--border);color:var(--ink-soft);font-size:.65rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:3px 8px;border-radius:6px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;flex-shrink:0}
+  .card-edit-btn:hover{background:var(--accent-light);color:var(--accent);border-color:var(--accent)}
+
+  /* ── EMPTY ── */
+  .empty{text-align:center;padding:60px 24px;color:var(--ink-soft)}
+  .empty-icon{font-size:2.5rem;margin-bottom:12px}
+  .empty h3{font-family:'DM Serif Display',serif;font-size:1.3rem;margin-bottom:6px}
+  .empty p{font-size:.88rem}
+
+  /* ── FOOTER ── */
+  .footer-note{text-align:center;font-size:.72rem;color:var(--ink-soft);padding:0 16px 28px;opacity:.7}
+
+  /* ── MODAL ── */
+  .overlay{display:none;position:fixed;inset:0;background:rgba(26,18,8,.55);z-index:200;align-items:flex-end;justify-content:center}
+  .overlay.open{display:flex}
+  .modal{background:var(--card);width:100%;max-width:580px;border-radius:16px 16px 0 0;padding:24px 20px 36px;max-height:92vh;overflow-y:auto;box-shadow:0 -8px 40px rgba(0,0,0,.18);animation:slideUp .25s ease}
+  @keyframes slideUp{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
+  .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+  .modal-title{font-family:'DM Serif Display',serif;font-size:1.2rem;color:var(--ink)}
+  .modal-close{background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--ink-soft);line-height:1;padding:4px}
+
+  /* ── FORM ── */
+  .field{margin-bottom:13px}
+  .field label{display:block;font-size:.75rem;font-weight:600;color:var(--ink-soft);margin-bottom:4px;letter-spacing:.02em;text-transform:uppercase}
+  .field input,.field select,.field textarea{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.9rem;color:var(--ink);background:var(--bg);outline:none;transition:border-color .15s}
+  .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent)}
+  .field textarea{resize:vertical;min-height:66px;line-height:1.5}
+  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+  /* ── BUTTONS ── */
+  .btn-row{display:flex;gap:9px;margin-top:16px;flex-wrap:wrap}
+  .btn{flex:1;min-width:100px;padding:11px 14px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.86rem;font-weight:600;cursor:pointer;transition:all .15s;border:none;text-align:center}
+  .btn-primary{background:var(--ink);color:var(--bg)}
+  .btn-primary:hover{background:#2e2010}
+  .btn-secondary{background:var(--border);color:var(--ink-soft)}
+  .btn-secondary:hover{background:#d0c8b8}
+  .btn-danger{background:var(--red-light);color:var(--red)}
+  .btn-danger:hover{background:#e8c0c0}
+  .btn-accent{background:var(--accent);color:#fff}
+  .btn-accent:hover{background:#b05020}
+  .btn-sm{flex:none;padding:7px 14px;font-size:.78rem;min-width:0}
+
+  /* ── MESSAGES ── */
+  .msg{font-size:.82rem;padding:8px 12px;border-radius:7px;margin-bottom:12px}
+  .msg.err{background:var(--red-light);color:var(--red)}
+  .msg.ok{background:var(--green-light);color:var(--green)}
+  .login-hint{font-size:.82rem;color:var(--ink-soft);margin-bottom:16px}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="header-top">
+    <div>
+      <h1>Maury County Resources</h1>
+      <div class="header-sub">Columbia, TN · 2026</div>
+    </div>
+    <button class="admin-btn" id="adminToggleBtn" onclick="openLogin()">Admin</button>
+  </div>
+  <div class="search-wrap">
+    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input id="search" type="search" placeholder="Search by need, org, or keyword…" autocomplete="off">
+  </div>
+</header>
+
+<!-- ADMIN BAR -->
+<div class="admin-bar" id="adminBar">
+  <span class="admin-label">⚙ Admin Mode</span>
+  <button class="btn btn-accent btn-sm" onclick="openForm(null)">+ Add Resource</button>
+  <button class="btn btn-secondary btn-sm" onclick="exportJSON()">Export JSON</button>
+  <button class="btn btn-secondary btn-sm" onclick="exportCSV()">Export CSV</button>
+  <button class="btn btn-danger btn-sm" onclick="adminLogout()">Log out</button>
+</div>
+
+<!-- FILTERS -->
+<div class="filters" id="filters">
+  <button class="pill active" data-cat="all">All</button>
+  <button class="pill" data-cat="food">🍎 Food</button>
+  <button class="pill" data-cat="housing">🏠 Housing</button>
+  <button class="pill" data-cat="mental">🧠 Mental Health</button>
+  <button class="pill" data-cat="finance">💰 Financial Aid</button>
+  <button class="pill" data-cat="child">👶 Children</button>
+  <button class="pill" data-cat="clothing">👕 Clothing</button>
+  <button class="pill" data-cat="career">💼 Career</button>
+  <button class="pill" data-cat="transit">🚌 Transport</button>
+  <button class="pill" data-cat="medical">🏥 Medical</button>
+  <button class="pill" data-cat="veterans">🎖 Veterans</button>
+  <button class="pill" data-cat="community">🤝 Community</button>
+</div>
+
+<div class="results-bar" id="results-bar"></div>
+<div class="cards" id="cards"></div>
+<p class="footer-note" id="footer-note"></p>
+
+<!-- LOGIN MODAL -->
+<div class="overlay" id="loginOverlay" onclick="bgClose(event,'loginOverlay')">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Admin Login</span>
+      <button class="modal-close" onclick="closeModal('loginOverlay')">×</button>
+    </div>
+    <p class="login-hint">Enter the admin password to manage listings.</p>
+    <div id="loginMsg"></div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="loginPw" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="doLogin()">Log In</button>
+      <button class="btn btn-secondary" onclick="closeModal('loginOverlay')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD/EDIT MODAL -->
+<div class="overlay" id="formOverlay" onclick="bgClose(event,'formOverlay')">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="formTitle">Add Resource</span>
+      <button class="modal-close" onclick="closeModal('formOverlay')">×</button>
+    </div>
+    <div id="formMsg"></div>
+    <div class="field"><label>Organization Name *</label><input type="text" id="fName" placeholder="e.g. FISH Food Bank"></div>
+    <div class="field"><label>Category *</label>
+      <select id="fCat">
+        <option value="food">🍎 Food</option>
+        <option value="housing">🏠 Housing</option>
+        <option value="mental">🧠 Mental Health</option>
+        <option value="finance">💰 Financial Aid</option>
+        <option value="child">👶 Children</option>
+        <option value="clothing">👕 Clothing</option>
+        <option value="career">💼 Career</option>
+        <option value="transit">🚌 Transportation</option>
+        <option value="medical">🏥 Medical / Dental / Vision</option>
+        <option value="veterans">🎖 Veterans</option>
+        <option value="community">🤝 Community</option>
+      </select>
+    </div>
+    <div class="field"><label>Services Offered *</label><textarea id="fService" placeholder="What does this org provide?"></textarea></div>
+    <div class="field-row">
+      <div class="field"><label>Hours</label><input type="text" id="fHours" placeholder="Mon–Fri 9am–5pm"></div>
+      <div class="field"><label>Phone</label><input type="text" id="fPhone" placeholder="931-000-0000"></div>
+    </div>
+    <div class="field"><label>Address</label><input type="text" id="fAddress" placeholder="Street address, Columbia"></div>
+    <div class="field"><label>Website</label><input type="url" id="fWeb" placeholder="https://…"></div>
+    <div class="field"><label>Requirements / Eligibility</label><textarea id="fReq" placeholder="Type 'none' if no requirements…" style="min-height:52px"></textarea></div>
+    <div class="field"><label>Last Verified</label><input type="date" id="fVerified"></div>
+    <div class="btn-row" id="formBtns"></div>
+  </div>
+</div>
+
+<!-- DELETE CONFIRM MODAL -->
+<div class="overlay" id="deleteOverlay" onclick="bgClose(event,'deleteOverlay')">
+  <div class="modal" style="max-height:48vh">
+    <div class="modal-header">
+      <span class="modal-title">Remove Resource</span>
+      <button class="modal-close" onclick="closeModal('deleteOverlay')">×</button>
+    </div>
+    <p style="font-size:.9rem;color:var(--ink-soft);margin-bottom:20px">Remove <strong id="deleteName"></strong>? This cannot be undone.</p>
+    <div class="btn-row">
+      <button class="btn btn-danger" onclick="confirmDelete()">Yes, Remove</button>
+      <button class="btn btn-secondary" onclick="closeModal('deleteOverlay')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── ADMIN PASSWORD ── change before deploying
+const ADMIN_PW = 'maury2026';
+
+// ── SEED DATA (2026 TCFD Resource Guide) ──
+const SEED = [
+  // FOOD
+  {id:1,name:"Maury County Harvest Share Food Pantry",cat:"food",service:"Community food pantry open to all.",hours:"Call for hours",address:"419 W. 9th St., Columbia",phone:"(931) 381-4285",web:"harvestshare.com",req:"none",verified:"2026-07-01"},
+  {id:2,name:"The People's Table at Columbia First UMC",cat:"food",service:"Free hot soup kitchen meals twice a week.",hours:"Tues 5:30 pm · Fri 11:30 am",address:"222 W. 7th St., Columbia",phone:"(931) 388-3306",web:"columbiafumc.org",req:"none",verified:"2026-07-01"},
+  {id:3,name:"Pleasant Heights Baptist Church Food Pantry",cat:"food",service:"Free food pantry.",hours:"Call for hours",address:"2712 Trotwood Ave, Columbia",phone:"(931) 388-6453",web:"pleasantheights.com",req:"none",verified:"2026-07-01"},
+  {id:4,name:"First Baptist Church of Columbia Food Pantry",cat:"food",service:"Community food pantry.",hours:"Tuesdays 3:30 pm",address:"2790 Pulaski Hwy, Columbia",phone:"(931) 388-2655",web:"thefirstfamily.org",req:"none",verified:"2026-07-01"},
+  {id:5,name:"Northside Baptist Church – Feed My Sheep",cat:"food",service:"Monthly food pantry distribution.",hours:"Wednesdays 10 am–12 pm",address:"127 Theta Pike, Columbia",phone:"(931) 388-2504",web:"northsidecolumbia.org",req:"none",verified:"2026-07-01"},
+  {id:6,name:"Grace Church of the Nazarene Food Pantry",cat:"food",service:"Community food pantry. Call for current distribution times.",hours:"Call for hours",address:"2302 Highland Ave, Columbia",phone:"(931) 388-4788",web:"columbiagrace.org",req:"none",verified:"2026-07-01"},
+  {id:7,name:"GraceWorks Ministries Food Pantry",cat:"food",service:"Appointment-based food pantry serving Williamson and surrounding counties.",hours:"By appointment",address:"104 SE Pkwy, Franklin",phone:"(615) 794-9055",web:"graceworkstn.org",req:"Provide household info, income, and government program status",verified:"2026-07-01"},
+  {id:8,name:"The Well Outreach Food Pantry",cat:"food",service:"Food pantries in Spring Hill and Mt. Pleasant. Contact for details.",hours:"Call for hours",address:"5306 Main St., Spring Hill · 700 N. Main St., Mt. Pleasant",phone:"(615) 302-9355",web:"thewelloutreach.org",req:"none",verified:"2026-07-01"},
+  {id:9,name:"Catholic Charities Family Resource Center",cat:"food",service:"Food pantry plus utility/rent assistance, hygiene items, diapers, and counseling.",hours:"Mon–Fri 8am–4:30pm",address:"1501 Hatcher Ln, Columbia",phone:"(931) 223-5444",web:"cctenn.org",req:"Maury Co. resident; bring ID, SSN cards, lease or utility bill; appointment required",verified:"2026-07-01"},
+  {id:10,name:"Berea Church of Christ",cat:"food",service:"Food and clothing assistance for community members.",hours:"Call for hours",address:"746 Bear Creek Pike, Columbia",phone:"(931) 381-4056",web:"",req:"none",verified:"2026-07-01"},
+  {id:11,name:"Chef's Table at Destiny Church",cat:"food",service:"Free community meal every Saturday.",hours:"Saturdays 2–4 pm",address:"612 N. Main St., Columbia",phone:"(931) 223-8298",web:"destinychurchtn.com",req:"none",verified:"2026-07-01"},
+  {id:12,name:"Columbia TN SDA Church Food Boxes",cat:"food",service:"Monthly free food boxes.",hours:"3rd Monday monthly, 10 am–1 pm",address:"870 Mooresville Pike, Columbia",phone:"(931) 381-2600",web:"columbiatntn.adventistchurch.org",req:"none",verified:"2026-07-01"},
+  {id:13,name:"Hampshire Baptist Church Food Giveaway",cat:"food",service:"Monthly food giveaway open to all.",hours:"2nd Monday monthly",address:"4063 Hampshire Pike, Hampshire",phone:"(931) 285-2681",web:"",req:"none",verified:"2026-07-01"},
+  {id:14,name:"Cross Bridges Baptist Church – Food Distribution",cat:"food",service:"Community food distribution center.",hours:"Call for hours",address:"2881 N. Cross Bridges Rd, Columbia",phone:"(931) 698-5435",web:"",req:"none",verified:"2026-07-01"},
+  {id:15,name:"First UMC Mt. Pleasant – Food Pantry",cat:"food",service:"Monthly food pantry.",hours:"Once a month; email for dates",address:"202 S. Main St., Mt. Pleasant",phone:"(931) 379-3520",web:"1stumcmp.org",req:"none",verified:"2026-07-01"},
+  {id:16,name:"Mt. Wesley Akin Nazarene Church Food Distribution",cat:"food",service:"Monthly food distribution.",hours:"3rd Saturday monthly, 10 am–12 pm",address:"2013 New Hwy 7, Columbia",phone:"",web:"mtwesleyakinnazarene.org",req:"none",verified:"2026-07-01"},
+  {id:17,name:"West Seventh Church of Christ",cat:"food",service:"Food and community assistance. Contact for details.",hours:"Call for hours",address:"405 W. 7th St., Columbia",phone:"(931) 388-6514",web:"w7church.org",req:"none",verified:"2026-07-01"},
+  {id:18,name:"Maury County Neighborhood Service Center (SCHRA)",cat:"food",service:"Emergency food assistance (LIHEAP, CSBG) plus utility help.",hours:"Mon–Fri 8am–4:30pm",address:"5021 Trotwood Ave., Ste. 5A, Columbia",phone:"(931) 388-1173",web:"schra.us",req:"Income ≤150% federal poverty guidelines; bring ID, SSN, utility bill",verified:"2026-07-01"},
+  {id:19,name:"The Family Center",cat:"food",service:"Food pantry and USDA commodities. Also offers rent/utility assistance and medication help.",hours:"Tues–Thu 9am–4:30pm",address:"921 S. Beckett St., Columbia",phone:"(931) 388-3840",web:"familycenter.org",req:"ID required; income-based eligibility; once/month food pantry limit",verified:"2026-07-01"},
+  {id:20,name:"211 Tennessee",cat:"food",service:"Free 24/7 information and referral line for food, shelter, utilities, counseling, childcare, and more.",hours:"24/7",address:"Statewide",phone:"211",web:"211.org",req:"none",verified:"2026-07-01"},
+
+  // CLOTHING
+  {id:21,name:"Common Threads",cat:"clothing",service:"Low-cost gently used clothing, furniture, and household items.",hours:"Tues–Fri 10am–5pm · Sat 10am–2pm",address:"107 Wayne St, Columbia",phone:"(931) 398-5658",web:"",req:"none",verified:"2026-07-01"},
+  {id:22,name:"Goodwill Retail Store",cat:"clothing",service:"Thrift store with clothing and household goods.",hours:"Call for hours",address:"405 James M. Campbell Blvd. S., Columbia",phone:"(931) 548-3338",web:"giveit2goodwill.org",req:"none",verified:"2026-07-01"},
+  {id:23,name:"Graymere Church of Christ Clothing Closet",cat:"clothing",service:"Free clothing closet (closed June–July).",hours:"Thursdays 8am–11am",address:"1320 Trotwood Ave, Columbia",phone:"(931) 388-4796",web:"graymere.com",req:"Call to schedule an appointment",verified:"2026-07-01"},
+  {id:24,name:"GraceWorks Ministries Thrift Store",cat:"clothing",service:"Thrift store with clothing and household items, first come first served.",hours:"Mon–Fri 9am–4pm",address:"104 SE Pkwy, Franklin",phone:"(615) 794-9055",web:"graceworkstn.org",req:"none",verified:"2026-07-01"},
+
+  // MENTAL HEALTH
+  {id:25,name:"Centerstone – Columbia",cat:"mental",service:"Mental health and addiction services: counseling, psychiatric care, crisis line, substance use treatment.",hours:"Mon–Fri 9am–5pm · Crisis 24/7",address:"Columbia",phone:"Appointments: (877) 467-3123 · Crisis: (800) 681-7444",web:"centerstone.org",req:"Accepts TennCare and Safety Net",verified:"2026-07-01"},
+  {id:26,name:"APEX Recovery Columbia",cat:"mental",service:"Addiction recovery treatment center.",hours:"Call for hours",address:"2710 Trotwood Ave, Ste. A & B, Columbia",phone:"(931) 616-3396",web:"apex.rehab/tennessee",req:"none",verified:"2026-07-01"},
+  {id:27,name:"Behavioral Health Group Treatment Center",cat:"mental",service:"Opioid addiction treatment; MAT and outpatient counseling.",hours:"Mon–Fri 5:30am–12pm · Sat–Sun 6am–9am",address:"1202 S. James Campbell Blvd., Ste. 7A, Columbia",phone:"(931) 381-0020",web:"bhgrecovery.com",req:"Valid ID; must be withdrawn 24 hrs before treatment; accepts commercial insurance + self-pay",verified:"2026-07-01"},
+  {id:28,name:"Cedar Recovery",cat:"mental",service:"Addiction recovery services.",hours:"Call for hours",address:"1512 Hatcher Ln, Columbia",phone:"(931) 548-8882",web:"cedarrecovery.com",req:"none",verified:"2026-07-01"},
+  {id:29,name:"FreshSTART Columbia",cat:"mental",service:"Recovery support community and services.",hours:"Call for hours",address:"222 W. 7th St., Columbia",phone:"(931) 478-5930",web:"freshstartcolumbia.org",req:"none",verified:"2026-07-01"},
+  {id:30,name:"Spero Health Columbia",cat:"mental",service:"Outpatient addiction treatment and recovery services.",hours:"Call for hours",address:"1407C Hatcher Ln, Columbia",phone:"(931) 208-3150",web:"sperohealth.com",req:"none",verified:"2026-07-01"},
+  {id:31,name:"Recovery Care of Columbia",cat:"mental",service:"Addiction recovery support. Call or text.",hours:"Call for hours",address:"Columbia",phone:"Call/text: (931) 548-3062",web:"recoverycarecolumbia.com",req:"none",verified:"2026-07-01"},
+  {id:32,name:"NAMI – National Alliance on Mental Illness",cat:"mental",service:"Mental illness support, education, and advocacy. Free HelpLine.",hours:"HelpLine M–F 10am–10pm ET",address:"Nashville (serves region)",phone:"Nashville: (615) 361-6608 · HelpLine: (800) 950-6264",web:"nami.org",req:"none",verified:"2026-07-01"},
+  {id:33,name:"Suicide & Crisis Lifeline",cat:"mental",service:"Free 24/7 crisis counseling. Call, text, or chat.",hours:"24/7",address:"Nationwide",phone:"988",web:"988lifeline.org",req:"none",verified:"2026-07-01"},
+  {id:34,name:"Tennessee Statewide Crisis Line",cat:"mental",service:"24/7 mental health crisis line. Text or call.",hours:"24/7",address:"Statewide",phone:"(855) 274-7471 · Text TN to 741-741",web:"",req:"none",verified:"2026-07-01"},
+  {id:35,name:"Buffalo Valley",cat:"mental",service:"Residential and outpatient addiction treatment.",hours:"Call for hours",address:"501 Park Ave. S., Hohenwald",phone:"(931) 796-5427 · Toll-free: (800) 447-2766",web:"buffalovalley.org",req:"none",verified:"2026-07-01"},
+  {id:36,name:"The Refuge Center for Counseling",cat:"mental",service:"Professional counseling for individuals, couples, and families.",hours:"Call for hours",address:"4317 Long Lane, Franklin",phone:"(615) 591-5262",web:"refugecenter.org",req:"none",verified:"2026-07-01"},
+  {id:37,name:"National Domestic Violence Hotline",cat:"mental",service:"24/7 confidential support for domestic violence survivors.",hours:"24/7",address:"Nationwide",phone:"(800) 799-7233 · Text START to 88788",web:"thehotline.org",req:"none",verified:"2026-07-01"},
+  {id:38,name:"Center of Hope",cat:"mental",service:"Domestic violence shelter and crisis services.",hours:"24-hour hotline",address:"Columbia",phone:"Office: (931) 840-0916 · Hotline: (931) 381-8580",web:"centerofhopetn.org",req:"none",verified:"2026-07-01"},
+
+  // FINANCIAL AID
+  {id:39,name:"The Family Center – Good Samaritan Program",cat:"finance",service:"Rent and utility assistance. Emergency help for disasters. Once per year.",hours:"Tues–Thu 9am–4:30pm",address:"921 S. Beckett St., Columbia",phone:"(931) 388-3840",web:"familycenter.org",req:"Once/year limit",verified:"2026-07-01"},
+  {id:40,name:"SCHRA – LIHEAP Energy Assistance",cat:"finance",service:"Help with heating costs, crisis heating assistance, and water bill help.",hours:"Mon–Fri 8am–4:30pm",address:"5021 Trotwood Ave., Ste. 5A, Columbia",phone:"(931) 388-1173",web:"schra.us",req:"Proof of income for all 18+ household members, SSN, photo ID, utility bill, 12-month utility history",verified:"2026-07-01"},
+  {id:41,name:"Donated Dental Services TN (Dental Lifeline Network)",cat:"finance",service:"Free comprehensive dental treatment for those who cannot afford it.",hours:"Call for hours",address:"Statewide (accepting Maury County applicants)",phone:"(615) 983-2601",web:"dentallifeline.org/tennessee",req:"Must have no means to pay AND be: age 65+, permanently disabled, or need medically necessary dental care",verified:"2026-07-01"},
+  {id:42,name:"Columbia Lions Club",cat:"finance",service:"Eyeglasses, eye exams, hearing aids, health services, and scholarships.",hours:"Contact for details",address:"Columbia",phone:"",web:"",req:"Contact ColumbiaLions2@gmail.com; services vary",verified:"2026-07-01"},
+  {id:43,name:"Dispensary of Hope",cat:"finance",service:"Free prescription medications distributed charitably.",hours:"Call for hours",address:"2700 Brick Church Pike, Nashville",phone:"(615) 736-5075",web:"dispensaryofhope.org",req:"none",verified:"2026-07-01"},
+  {id:44,name:"NeedyMeds",cat:"finance",service:"National database of patient assistance programs and drug discount cards.",hours:"24/7 online",address:"Nationwide",phone:"(800) 503-6897",web:"needymeds.org",req:"none",verified:"2026-07-01"},
+  {id:45,name:"RX Outreach",cat:"finance",service:"Affordable prescription medications for low-income individuals.",hours:"Call for hours",address:"Nationwide",phone:"(888) 796-1234",web:"rxoutreach.org",req:"Income-based eligibility",verified:"2026-07-01"},
+
+  // CHILDREN
+  {id:46,name:"CASA of Maury County",cat:"child",service:"Court-appointed volunteer advocates for children at risk in the foster care system.",hours:"Call for hours",address:"502 N. Garden St., Ste. 103, Columbia",phone:"(931) 381-4733",web:"casaofmaurycounty.org",req:"Must be court-appointed",verified:"2026-07-01"},
+  {id:47,name:"The Center for Family Development (TCFD)",cat:"child",service:"Healthy Families, Parents as Teachers, and Relative Caregiver programs.",hours:"Call for hours",address:"Columbia",phone:"(931) 684-4676",web:"mytcfd.org",req:"none",verified:"2026-07-01"},
+  {id:48,name:"Boys & Girls Club of South Central TN",cat:"child",service:"After-school and youth development programs. Financial assistance available.",hours:"After-school hours",address:"210 W. 8th St., Columbia",phone:"(931) 490-9401",web:"bgcsctn.org",req:"Financial assistance application with prior year tax return and pay stubs",verified:"2026-07-01"},
+  {id:49,name:"Dolly Parton's Imagination Library",cat:"child",service:"Free books mailed monthly to children ages 0–5.",hours:"Apply online or by phone",address:"Columbia: (931) 375-6502 · Mt. Pleasant: (931) 379-3752",phone:"(931) 375-6502",web:"maurycounty-tn.gov",req:"Must live in Maury County; children up to age 5",verified:"2026-07-01"},
+  {id:50,name:"The King's Daughters' School",cat:"child",service:"Educational, residential, and community services for individuals with developmental disabilities.",hours:"Call for hours",address:"412 W. 9th St., Columbia",phone:"(931) 388-3810",web:"tkds.org",req:"Intellectual/developmental disability; application and assessments required",verified:"2026-07-01"},
+  {id:51,name:"Pregnancy Centers of Middle Tennessee",cat:"child",service:"Free pregnancy testing, limited ultrasounds, peer counselors, baby resources, and post-abortion support.",hours:"Call for hours",address:"Columbia: (931) 381-4024 · Spring Hill: (615) 302-2200",phone:"(931) 381-4024",web:"pcofmt.com",req:"none",verified:"2026-07-01"},
+  {id:52,name:"Nurture the Next",cat:"child",service:"Early childhood family support programs.",hours:"Call for hours",address:"Statewide",phone:"(615) 383-0994",web:"nurturethenext.org",req:"none",verified:"2026-07-01"},
+  {id:53,name:"Nurses For Newborns – Tennessee",cat:"child",service:"Nurse home visits for new parents. Serves Maury County.",hours:"Call for hours",address:"Statewide",phone:"(615) 313-9989 · Toll-free: (888) 654-7427",web:"nursesfornewborns.org",req:"Maury County resident; teen mothers, medically fragile babies, or mothers with medical/intellectual challenges",verified:"2026-07-01"},
+  {id:54,name:"Maury County Head Start / Early Head Start",cat:"child",service:"Early childhood education, health, nutrition, and parent services.",hours:"Call for hours",address:"209 Wayne St, Columbia",phone:"(931) 381-8762",web:"schra.us",req:"Income eligibility; bring proof of birth, income, and insurance",verified:"2026-07-01"},
+  {id:55,name:"Department of Children's Services – Maury County",cat:"child",service:"Child welfare services, foster care, and family support.",hours:"Mon–Fri 8am–4:30pm",address:"1400 College Park Dr., Ste. A, Columbia",phone:"(931) 380-2587",web:"tn.gov/dcs",req:"none",verified:"2026-07-01"},
+
+  // CAREER
+  {id:56,name:"American Job Center",cat:"career",service:"Job listings, workshops, resume help, computer access for job applications.",hours:"Mon–Fri 8am–4:30pm",address:"119 Nashville Hwy, #106, Columbia",phone:"(931) 490-3800",web:"",req:"none",verified:"2026-07-01"},
+  {id:57,name:"Goodwill Career Solutions Center",cat:"career",service:"In-person and virtual classes, training certifications, career coaches, job placement.",hours:"Call for hours",address:"1008 Nasdaq St., Spring Hill",phone:"(931) 548-3460",web:"giveit2goodwill.org",req:"TN residents; see website for class schedule",verified:"2026-07-01"},
+  {id:58,name:"Vocational Rehabilitation Services",cat:"career",service:"Employment support for people with disabilities. Located within TN Dept. of Human Services.",hours:"Mon–Fri 8am–4:30pm",address:"1400 College Park Dr., Columbia",phone:"(931) 380-2552",web:"tn.gov",req:"Must have a documented disability affecting employment",verified:"2026-07-01"},
+
+  // TRANSPORTATION
+  {id:59,name:"Maury County Public Transportation",cat:"transit",service:"Public transit serving Maury County.",hours:"Call for routes and schedules",address:"Maury County",phone:"(931) 388-9595",web:"tnpathfinder.org",req:"none",verified:"2026-07-01"},
+  {id:60,name:"Maury United Ministries (MUMs) Rides",cat:"transit",service:"Volunteer-based rides to and from work. Call or email to schedule.",hours:"Call before noon for next-day transport",address:"812 N. Main St., Mt. Pleasant",phone:"(931) 626-6867",web:"mauryunited.org",req:"Leave name, address, destination, and time; confirmation after 5 pm",verified:"2026-07-01"},
+  {id:61,name:"Non-Emergency Medical Transportation (TennCare)",cat:"transit",service:"Free rides to TennCare medical appointments. Call your plan's NEMT line.",hours:"Book in advance",address:"Statewide",phone:"BlueCare: (855) 735-4660 · TennCare Select: (866) 473-7565",web:"tn.gov/tenncare",req:"Must have TennCare; advance booking required",verified:"2026-07-01"},
+  {id:62,name:"Regional Transportation Authority of Middle TN",cat:"transit",service:"Carpool and vanpool services for Middle Tennessee commuters.",hours:"Call for details",address:"Regional",phone:"(615) 862-8833",web:"hub.nashville.gov",req:"none",verified:"2026-07-01"},
+
+  // HOUSING
+  {id:63,name:"Place of Hope",cat:"housing",service:"Emergency shelter, residential care for men and women with addiction, and transitional living.",hours:"Call for intake",address:"105 N. James Campbell Blvd., Columbia",phone:"(931) 388-9406",web:"placeofhopetn.com",req:"Background check required; no active fugitives",verified:"2026-07-01"},
+  {id:64,name:"Columbia Housing & Redevelopment Corporation",cat:"housing",service:"Affordable housing. Includes GED classes, tech access, and budgeting support.",hours:"Mon–Thu 7:30am–4pm",address:"101 Penny Ave, Columbia",phone:"(931) 388-5203",web:"chrc-tn.org",req:"HUD income and citizenship requirements; no prior PHA lease termination in last 12 months",verified:"2026-07-01"},
+  {id:65,name:"Habitat for Humanity Williamson-Maury",cat:"housing",service:"Builds safe homes with affordable mortgages for qualifying families.",hours:"Call for hours",address:"109 Noah Dr., Franklin",phone:"(615) 690-8090",web:"hfhwm.org",req:"Application required; income and need criteria apply",verified:"2026-07-01"},
+  {id:66,name:"Room in the Inn – Columbia",cat:"housing",service:"Transitional housing and emergency shelter support.",hours:"Call for hours",address:"2800 Trotwood Ave, Columbia",phone:"(931) 698-6677",web:"roomintheinn.co",req:"none",verified:"2026-07-01"},
+  {id:67,name:"Legal Aid Society of Middle Tennessee",cat:"housing",service:"Free civil legal help for low-income residents including housing, family law, and more.",hours:"Call for hours",address:"1503 Hatcher Ln, Ste. 105, Columbia",phone:"(931) 381-5533 · Toll-free: (800) 238-1443",web:"las.org",req:"Income-based eligibility",verified:"2026-07-01"},
+
+  // MEDICAL
+  {id:68,name:"Maury Regional Medical Center",cat:"medical",service:"Full-service regional hospital.",hours:"24/7 Emergency",address:"1224 Trotwood Ave, Columbia",phone:"(931) 381-1111",web:"mauryregional.com",req:"none",verified:"2026-07-01"},
+  {id:69,name:"Agape Family Health",cat:"medical",service:"Primary care clinic.",hours:"Call for hours",address:"915 S. Garden St., Columbia",phone:"(931) 548-8090",web:"agapefamilyhealth.com",req:"none",verified:"2026-07-01"},
+  {id:70,name:"Fast Pace Health",cat:"medical",service:"Urgent care and primary care clinic.",hours:"Call for hours",address:"600 S. James M. Campbell Blvd., Columbia",phone:"(931) 398-1757",web:"fastpacehealth.com",req:"none",verified:"2026-07-01"},
+  {id:71,name:"Maury Regional Urgent Care – Columbia",cat:"medical",service:"Urgent care clinic.",hours:"Call for hours",address:"1218 Trotwood Ave, Columbia",phone:"(931) 380-4114",web:"mauryregional.com",req:"none",verified:"2026-07-01"},
+  {id:72,name:"Maury County Health Department – WIC",cat:"medical",service:"Women, Infants, and Children nutrition program plus health services.",hours:"Call for hours",address:"1909 Hampshire Pike, Columbia",phone:"(931) 388-5757",web:"tn.gov",req:"TN resident; meet income guidelines; nutritional or medical risk",verified:"2026-07-01"},
+  {id:73,name:"St. Peter's Episcopal Church Health Services",cat:"medical",service:"Eye care, dental, hearing aids, equipment, and respite care. Application required.",hours:"Call for hours",address:"311 W. 7th St., Columbia",phone:"(931) 388-3331",web:"saintpeterscolumbia.org",req:"Application required; income-based",verified:"2026-07-01"},
+  {id:74,name:"Mercy Community Healthcare",cat:"medical",service:"Community health center offering medical, dental, and behavioral health services.",hours:"Call for hours",address:"Franklin and Lewisburg locations",phone:"Franklin: (615) 790-0567 · Lewisburg: (615) 814-3400",web:"mercytn.org",req:"none",verified:"2026-07-01"},
+  {id:75,name:"Tennessee Poison Center",cat:"medical",service:"24/7 poison emergency hotline.",hours:"24/7",address:"Nationwide",phone:"(800) 222-1222",web:"vumc.org",req:"none",verified:"2026-07-01"},
+  {id:76,name:"Breast and Cervical Cancer Health Program",cat:"medical",service:"Yearly pelvic exams and Pap tests for qualifying women.",hours:"Call for hours",address:"Statewide",phone:"(877) 969-6636",web:"",req:"Income and age eligibility",verified:"2026-07-01"},
+
+  // VETERANS
+  {id:77,name:"Maury County Veteran Services",cat:"veterans",service:"Local veterans benefits assistance and referrals.",hours:"Call for hours",address:"308 W. 7th St., Columbia",phone:"(931) 375-1510",web:"maurycounty-tn.gov",req:"Must be a veteran or eligible dependent",verified:"2026-07-01"},
+  {id:78,name:"Veterans Crisis Line",cat:"veterans",service:"Free, confidential crisis support for veterans 24/7. Call, text, or chat.",hours:"24/7",address:"Nationwide",phone:"988, then press 1 · Text 838255",web:"veteranscrisisline.net",req:"none",verified:"2026-07-01"},
+  {id:79,name:"National Call Center for Homeless Veterans",cat:"veterans",service:"Housing assistance and referrals for homeless veterans.",hours:"24/7",address:"Nationwide",phone:"(877) 424-3838",web:"va.gov",req:"Must be a veteran",verified:"2026-07-01"},
+  {id:80,name:"Nashville VA Regional Benefit Office",cat:"veterans",service:"VA benefits, claims, and services.",hours:"Call for hours",address:"7100 Commerce Way, Brentwood",phone:"Benefits: (800) 827-1000",web:"va.gov",req:"Must be a veteran or eligible dependent",verified:"2026-07-01"},
+
+  // COMMUNITY
+  {id:81,name:"United Way of Maury County",cat:"community",service:"Mobilizes community resources; coordinates nonprofits and funding across Maury County.",hours:"Call for hours",address:"308 West 7th Street Suite 3, Columbia",phone:"(931) 381-0100",web:"unitedwayofmaurycounty.com",req:"none",verified:"2026-07-01"},
+  {id:82,name:"Columbia Cares",cat:"community",service:"HIV/AIDS prevention, testing, and social services for those living with HIV/AIDS.",hours:"Call for hours",address:"1202 S. James Campbell Blvd., Ste. 8B, Columbia",phone:"(931) 982-3894",web:"columbiacares.org",req:"none",verified:"2026-07-01"},
+  {id:83,name:"Maury County Senior Center",cat:"community",service:"Activities and support services for adults 55+ to maintain independence.",hours:"Call for hours",address:"1020 Maury County Park Dr., Columbia",phone:"(931) 380-3950",web:"mcsc2.org",req:"Age 55+",verified:"2026-07-01"},
+  {id:84,name:"Area Agency on Aging (SETAAAD)",cat:"community",service:"Represents and serves adults 60+ and those with physical disabilities.",hours:"Call for hours",address:"101 Sam Watkins Blvd, Mt. Pleasant",phone:"(931) 379-2929",web:"setaaad.org",req:"Age 60+",verified:"2026-07-01"},
+  {id:85,name:"American Red Cross of Tennessee River",cat:"community",service:"Disaster relief, emergency assistance, and community services.",hours:"Call for hours",address:"Regional",phone:"(931) 645-6401",web:"redcross.org",req:"none",verified:"2026-07-01"},
+  {id:86,name:"Progressive Directions",cat:"community",service:"Services for individuals with intellectual and/or developmental disabilities.",hours:"Call for hours",address:"1209 Tradewinds Drive, Columbia",phone:"(931) 381-2114",web:"progressivedirections.org",req:"Intellectual/developmental disability diagnosis",verified:"2026-07-01"},
+];
+
+// ── STATE ──
+let data=[], activecat='all', query='', isAdmin=false, editingId=null, pendingDeleteId=null;
+
+// ── STORAGE ──
+function loadData(){try{const s=localStorage.getItem('mcrd26');data=s?JSON.parse(s):JSON.parse(JSON.stringify(SEED))}catch{data=JSON.parse(JSON.stringify(SEED))}}
+function saveData(){try{localStorage.setItem('mcrd26',JSON.stringify(data))}catch{}}
+function nextId(){return data.length?Math.max(...data.map(d=>d.id))+1:1}
+
+// ── HELPERS ──
+function catClass(c){return{food:'cat-food',housing:'cat-housing',mental:'cat-mental',finance:'cat-finance',child:'cat-child',clothing:'cat-clothing',career:'cat-career',transit:'cat-transit',medical:'cat-medical',veterans:'cat-veterans',community:'cat-community'}[c]||'cat-community'}
+function catLabel(c){return{food:'Food',housing:'Housing',mental:'Mental Health',finance:'Financial Aid',child:'Children',clothing:'Clothing',career:'Career',transit:'Transport',medical:'Medical',veterans:'Veterans',community:'Community'}[c]||c}
+const IC={clock:`<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>`,pin:`<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`,phone:`<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4 2 2 0 0 1 3.6 1.22h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.9a16 16 0 0 0 6.09 6.09l.95-.95a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 21.73 16.92z"/></svg>`,req:`<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>`,cal:`<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,globe:`<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`};
+
+// ── RENDER ──
+function render(){
+  const q=query.toLowerCase();
+  const f=data.filter(d=>(activecat==='all'||d.cat===activecat)&&(!q||[d.name,d.service,d.address,d.req,d.phone].join(' ').toLowerCase().includes(q)));
+  document.getElementById('results-bar').textContent=f.length?`${f.length} resource${f.length!==1?'s':''} found`:'';
+  const el=document.getElementById('cards');
+  if(!f.length){el.innerHTML=`<div class="empty"><div class="empty-icon">🔍</div><h3>No results found</h3><p>Try a different search or category.</p></div>`;return}
+  const ONE_YR=365*24*60*60*1000,now=Date.now();
+  el.innerHTML=f.map((d,i)=>{
+    const stale=d.verified&&(now-new Date(d.verified).getTime())>ONE_YR;
+    const ver=d.verified?new Date(d.verified).toLocaleDateString('en-US',{month:'short',year:'numeric'}):'';
+    const ph=d.phone?d.phone.replace(/[^0-9+]/g,''):'';
+    return `<div class="card${stale?' stale':''}" style="animation-delay:${Math.min(i*.04,.4)}s">
+      <div class="card-top">
+        <div class="card-name">${d.name}</div>
+        <div class="card-badges">
+          <span class="cat-badge ${catClass(d.cat)}">${catLabel(d.cat)}</span>
+          ${isAdmin?`<button class="card-edit-btn" onclick="openForm(${d.id})">Edit</button>`:''}
+        </div>
+      </div>
+      <div class="card-service">${d.service}</div>
+      <div class="card-meta">
+        ${d.hours?`<div class="meta-row">${IC.clock}<span><span class="meta-label">Hours:</span>${d.hours}</span></div>`:''}
+        ${d.address?`<div class="meta-row">${IC.pin}<span>${d.address}</span></div>`:''}
+        ${d.phone?`<div class="meta-row">${IC.phone}<span><a href="tel:${ph}">${d.phone}</a></span></div>`:''}
+        ${d.web?`<div class="meta-row">${IC.globe}<span><a href="${d.web.startsWith('http')?d.web:'https://'+d.web}" target="_blank" rel="noopener">${d.web.replace(/^https?:\/\//,'')}</a></span></div>`:''}
+        <div class="meta-row">${IC.req}<span><span class="meta-label">Requirements:</span>${d.req==='none'?'<span class="req-none">None</span>':d.req}</span></div>
+        ${ver?`<div class="meta-row">${IC.cal}<span style="color:${stale?'var(--yellow)':'var(--ink-soft)'}"><span class="meta-label">Verified:</span>${ver}${stale?' · needs update':''}</span></div>`:''}
+      </div>
+    </div>`}).join('');
+}
+
+// ── FILTER PILLS ──
+document.getElementById('search').addEventListener('input',e=>{query=e.target.value;render()});
+document.getElementById('filters').addEventListener('click',e=>{
+  const p=e.target.closest('.pill');if(!p)return;
+  document.querySelectorAll('.pill').forEach(x=>x.classList.remove('active'));
+  p.classList.add('active');activecat=p.dataset.cat;render();
+});
+
+// ── LOGIN ──
+function openLogin(){if(isAdmin){adminLogout();return}document.getElementById('loginMsg').innerHTML='';document.getElementById('loginPw').value='';openModal('loginOverlay');setTimeout(()=>document.getElementById('loginPw').focus(),200)}
+function doLogin(){
+  if(document.getElementById('loginPw').value===ADMIN_PW){
+    isAdmin=true;closeModal('loginOverlay');
+    document.getElementById('adminBar').classList.add('visible');
+    document.getElementById('adminToggleBtn').textContent='Exit Admin';render();
+  }else{document.getElementById('loginMsg').innerHTML='<div class="msg err">Incorrect password.</div>';document.getElementById('loginPw').select()}
+}
+function adminLogout(){isAdmin=false;document.getElementById('adminBar').classList.remove('visible');document.getElementById('adminToggleBtn').textContent='Admin';render()}
+
+// ── ADD / EDIT ──
+function openForm(id){
+  editingId=id;
+  const d=id?data.find(x=>x.id===id):null;
+  document.getElementById('formTitle').textContent=d?'Edit Resource':'Add Resource';
+  document.getElementById('formMsg').innerHTML='';
+  document.getElementById('fName').value=d?.name||'';
+  document.getElementById('fCat').value=d?.cat||'food';
+  document.getElementById('fService').value=d?.service||'';
+  document.getElementById('fHours').value=d?.hours||'';
+  document.getElementById('fAddress').value=d?.address||'';
+  document.getElementById('fPhone').value=d?.phone||'';
+  document.getElementById('fWeb').value=d?.web||'';
+  document.getElementById('fReq').value=d?.req||'';
+  document.getElementById('fVerified').value=d?.verified||new Date().toISOString().slice(0,10);
+  document.getElementById('formBtns').innerHTML=d
+    ?`<button class="btn btn-primary" onclick="saveForm()">Save Changes</button><button class="btn btn-danger" onclick="openDelete(${id})">Remove</button><button class="btn btn-secondary" onclick="closeModal('formOverlay')">Cancel</button>`
+    :`<button class="btn btn-accent" onclick="saveForm()">Add Resource</button><button class="btn btn-secondary" onclick="closeModal('formOverlay')">Cancel</button>`;
+  openModal('formOverlay');setTimeout(()=>document.getElementById('fName').focus(),200);
+}
+function saveForm(){
+  const name=document.getElementById('fName').value.trim();
+  const service=document.getElementById('fService').value.trim();
+  if(!name||!service){document.getElementById('formMsg').innerHTML='<div class="msg err">Name and Services are required.</div>';return}
+  const entry={id:editingId||nextId(),name,cat:document.getElementById('fCat').value,service,hours:document.getElementById('fHours').value.trim(),address:document.getElementById('fAddress').value.trim(),phone:document.getElementById('fPhone').value.trim(),web:document.getElementById('fWeb').value.trim(),req:document.getElementById('fReq').value.trim()||'none',verified:document.getElementById('fVerified').value||new Date().toISOString().slice(0,10)};
+  if(editingId){const i=data.findIndex(x=>x.id===editingId);data[i]=entry}else{data.push(entry)}
+  saveData();closeModal('formOverlay');render();
+}
+
+// ── DELETE ──
+function openDelete(id){pendingDeleteId=id;document.getElementById('deleteName').textContent=data.find(x=>x.id===id)?.name||'this resource';closeModal('formOverlay');openModal('deleteOverlay')}
+function confirmDelete(){data=data.filter(x=>x.id!==pendingDeleteId);saveData();pendingDeleteId=null;closeModal('deleteOverlay');render()}
+
+// ── EXPORT ──
+function exportJSON(){dl(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),'maury-county-resources.json')}
+function exportCSV(){const cols=['id','name','cat','service','hours','address','phone','web','req','verified'];const rows=data.map(d=>cols.map(c=>`"${(d[c]||'').replace(/"/g,'""')}"`).join(','));dl(new Blob([cols.join(',')+'\n'+rows.join('\n')],{type:'text/csv'}),'maury-county-resources.csv')}
+function dl(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click()}
+
+// ── MODAL ──
+function openModal(id){document.getElementById(id).classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+function bgClose(e,id){if(e.target===document.getElementById(id))closeModal(id)}
+
+// ── FOOTER: auto-stamp year and last-updated date ──
+(function(){
+  const yr = new Date().getFullYear();
+  const updated = new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+  const el = document.getElementById('footer-note');
+  if(el) el.textContent = `Source: TCFD Maury County Resource Guide · Last updated ${updated} · © ${yr} Maury County Resource Directory`;
+})();
+
+// ── INIT ──
+loadData();render();
+</script>
+</body>
+</html>
