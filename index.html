@@ -49,10 +49,12 @@
   body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh}
 
   /* ── HEADER ── */
-  header{background:var(--ink);color:var(--bg);padding:20px 16px 14px;position:sticky;top:0;z-index:100;box-shadow:0 2px 20px rgba(0,0,0,.25)}
-  .header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  header{background:var(--ink);color:var(--bg);padding:20px 16px 14px;position:sticky;top:0;z-index:100;box-shadow:0 2px 20px rgba(0,0,0,.25);transition:padding .2s}
+  .header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;overflow:hidden;transition:max-height .2s,margin-bottom .2s,opacity .2s;max-height:60px;opacity:1}
   header h1{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.4rem;color:var(--bg);line-height:1.1}
   .header-sub{font-size:.7rem;font-weight:300;color:#a89880;letter-spacing:.08em;text-transform:uppercase;margin-top:2px}
+  header.compact{padding:10px 16px}
+  header.compact .header-top{max-height:0;margin-bottom:0;opacity:0;pointer-events:none}
   .admin-btn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#a89880;font-family:'Plus Jakarta Sans',sans-serif;font-size:.72rem;font-weight:500;padding:5px 12px;border-radius:6px;cursor:pointer;letter-spacing:.04em;text-transform:uppercase;transition:all .15s;flex-shrink:0}
   .admin-btn:hover{background:rgba(255,255,255,.18);color:#fff}
   .font-toggle{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#a89880;font-family:'Plus Jakarta Sans',sans-serif;font-size:.72rem;font-weight:600;padding:5px 10px;border-radius:6px;cursor:pointer;transition:all .15s;flex-shrink:0;letter-spacing:.02em}
@@ -88,13 +90,13 @@
   #search:focus{background:rgba(255,255,255,.16)}
 
   /* ── ADMIN BAR ── */
-  .admin-bar{display:none;background:#fff7e0;border-bottom:2px solid var(--yellow);padding:10px 16px;gap:8px;align-items:center;flex-wrap:wrap;position:sticky;top:108px;z-index:89}
+  .admin-bar{display:none;background:#fff7e0;border-bottom:2px solid var(--yellow);padding:10px 16px;gap:8px;align-items:center;flex-wrap:wrap;position:sticky;top:var(--header-h,108px);z-index:89;transition:top .2s}
   .admin-bar.visible{display:flex}
   .admin-label{font-size:.75rem;font-weight:600;color:var(--yellow);letter-spacing:.04em;text-transform:uppercase;flex-shrink:0}
 
   /* ── FILTERS ── */
-  .filters{padding:10px 16px;display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;background:var(--bg);border-bottom:1px solid var(--border);position:sticky;top:108px;z-index:88}
-  .admin-bar.visible ~ .filters{top:158px}
+  .filters{padding:10px 16px;display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;background:var(--bg);border-bottom:1px solid var(--border);position:sticky;top:var(--header-h,108px);z-index:88;transition:top .2s}
+  .admin-bar.visible ~ .filters{top:calc(var(--header-h,108px) + 50px)}
   .filters::-webkit-scrollbar{display:none}
   .pill{flex-shrink:0;padding:6px 14px;border-radius:999px;border:1.5px solid var(--border);background:var(--card);font-family:'Plus Jakarta Sans',sans-serif;font-size:.8rem;font-weight:500;cursor:pointer;transition:all .15s;white-space:nowrap;color:var(--ink-soft)}
   .pill.active{background:var(--ink);color:var(--bg);border-color:var(--ink)}
@@ -858,6 +860,20 @@ function bgClose(e,id){if(e.target===document.getElementById(id))closeModal(id)}
   const updated = new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
   const el = document.getElementById('footer-note');
   if(el) el.textContent = `Source: TCFD Maury County Resource Guide · Last updated ${updated} · © ${yr} MauryHelps`;
+})();
+
+// ── COMPACT HEADER ON SCROLL ──
+(function(){
+  const hdr = document.querySelector('header');
+  const root = document.documentElement;
+  function updateHeader(){
+    const compact = window.scrollY > 10;
+    hdr.classList.toggle('compact', compact);
+    root.style.setProperty('--header-h', hdr.offsetHeight + 'px');
+  }
+  window.addEventListener('scroll', updateHeader, {passive:true});
+  // Set initial value after layout
+  requestAnimationFrame(()=>{ root.style.setProperty('--header-h', hdr.offsetHeight + 'px'); });
 })();
 
 // ── RESIZE: re-render when crossing the desktop breakpoint ──
