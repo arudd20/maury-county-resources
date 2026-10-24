@@ -84,6 +84,8 @@
   /* Transit tip surfaced when org is far */
   .transit-tip{background:var(--blue-light);border:1px solid var(--blue);border-radius:10px;padding:10px 14px;font-size:.8rem;color:var(--blue);display:flex;align-items:center;gap:8px;margin-bottom:0}
   .transit-tip strong{color:var(--ink)}
+  body.text-lg .transit-tip{font-size:.9rem;padding:12px 16px}
+  body.text-xl .transit-tip{font-size:1rem;padding:14px 18px}
 
   .results-bar{padding:10px 16px 4px;font-size:.78rem;color:var(--ink-soft);font-weight:500}
 
@@ -734,11 +736,18 @@ function render(){
   resBar.textContent=f.length?`${f.length} resource${f.length!==1?'s':''} found`:'';
   if(!f.length){listEl.innerHTML=`<div class="empty"><div class="empty-icon">🔍</div><h3>No results found</h3><p>Try a different search or category.</p></div>`;return}
   const TRANSIT_IDS=new Set([59,60,61,62]);
-  let html='';
+  const showTransit=activecat!=='transit'; // don't show tip inside the transit category itself
+  let html='',transitShown=false;
   f.forEach((d,i)=>{
     html+=cardHTML(d,i);
-    const mi=distMi(d);
-    if(mi!==null&&mi>2.5&&!TRANSIT_IDS.has(d.id)&&!html.includes('transit-tip'))html+=transitTipHTML();
+    if(showTransit&&!transitShown&&!TRANSIT_IDS.has(d.id)){
+      const mi=distMi(d);
+      // Show after first far card, or after 4th card if no distance data
+      if((mi!==null&&mi>2.5)||(mi===null&&i>=3)){
+        html+=transitTipHTML();
+        transitShown=true;
+      }
+    }
   });
   listEl.innerHTML=html;
 }
