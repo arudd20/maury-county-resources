@@ -69,7 +69,6 @@
   .cat-home-title{font-family:'DM Serif Display',serif;font-size:1.5rem;color:var(--ink);margin-bottom:4px}
   .cat-home-sub{font-size:.85rem;color:var(--ink-soft);margin-bottom:28px}
   .cat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-  @media(min-width:1100px){.cat-grid{grid-template-columns:repeat(4,1fr)}}
   .cat-tile{background:var(--card);border:1.5px solid var(--border);border-radius:14px;padding:22px 18px;display:flex;flex-direction:column;align-items:flex-start;cursor:pointer;transition:all .18s;box-shadow:var(--shadow)}
   .cat-tile:hover{border-color:var(--accent);background:var(--accent-light);transform:translateY(-2px);box-shadow:var(--shadow-hover)}
   .cat-tile-emoji{font-size:1.8rem;margin-bottom:10px;line-height:1}
@@ -83,8 +82,7 @@
   .back-btn{background:none;border:1.5px solid var(--border);color:var(--ink-soft);font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:600;padding:6px 14px;border-radius:8px;cursor:pointer;letter-spacing:.02em;transition:all .15s;display:flex;align-items:center;gap:6px}
   .back-btn:hover{border-color:var(--ink-soft);color:var(--ink)}
   .cat-view-title{font-family:'DM Serif Display',serif;font-size:1.4rem;color:var(--ink);display:flex;align-items:center;gap:8px}
-  .cat-view-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-  @media(min-width:1200px){.cat-view-cards{grid-template-columns:repeat(4,1fr)}}
+  .cat-view-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
 
   /* Mobile: tile home is hidden, cards stay single-col */
   @media(max-width:899px){
@@ -92,11 +90,11 @@
     .cards{padding:4px 12px 80px}
   }
 
-  .card{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);padding:16px;box-shadow:var(--shadow);animation:fadeUp .25s ease both}
+  .card{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);padding:20px;box-shadow:var(--shadow);animation:fadeUp .25s ease both}
   .card.stale{border-left:3px solid var(--yellow)}
   @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
   .card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px}
-  .card-name{font-family:'DM Serif Display',serif;font-size:1.05rem;line-height:1.25;color:var(--ink);flex:1}
+  .card-name{font-family:'DM Serif Display',serif;font-size:1.2rem;line-height:1.25;color:var(--ink);flex:1}
   .card-badges{display:flex;align-items:center;gap:6px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end}
   .cat-badge{padding:3px 9px;border-radius:999px;font-size:.68rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
   .cat-food{background:var(--yellow-light);color:var(--yellow)}
@@ -110,9 +108,9 @@
   .cat-clothing{background:#f5e8f0;color:#8f2a6b}
   .cat-medical{background:#e8f5f5;color:#2a7a7a}
   .cat-veterans{background:#f5f0e0;color:#7a5a1a}
-  .card-service{font-size:.85rem;color:var(--ink-soft);line-height:1.45;margin-bottom:10px}
-  .card-meta{display:flex;flex-direction:column;gap:4px}
-  .meta-row{display:flex;align-items:flex-start;gap:6px;font-size:.78rem;color:var(--ink-soft)}
+  .card-service{font-size:.92rem;color:var(--ink-soft);line-height:1.5;margin-bottom:12px}
+  .card-meta{display:flex;flex-direction:column;gap:5px}
+  .meta-row{display:flex;align-items:flex-start;gap:6px;font-size:.83rem;color:var(--ink-soft)}
   .meta-row svg{flex-shrink:0;margin-top:1px;color:var(--accent)}
   .meta-label{font-weight:600;color:var(--ink);margin-right:2px}
   .req-none{display:inline-block;background:var(--green-light);color:var(--green);font-size:.68rem;font-weight:600;padding:2px 8px;border-radius:999px;margin-top:2px}
