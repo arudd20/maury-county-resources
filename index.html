@@ -46,6 +46,17 @@
   .pill{flex-shrink:0;padding:6px 14px;border-radius:999px;border:1.5px solid var(--border);background:var(--card);font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:500;cursor:pointer;transition:all .15s;white-space:nowrap;color:var(--ink-soft)}
   .pill.active{background:var(--ink);color:var(--bg);border-color:var(--ink)}
   .pill:hover:not(.active){border-color:var(--ink-soft);color:var(--ink)}
+  .pill[data-cat="open-now"].active{background:var(--green);border-color:var(--green);color:#fff}
+  .pill[data-cat="open-now"]:hover:not(.active){border-color:var(--green);color:var(--green)}
+  /* Distance badges */
+  .dist-badge{display:inline-flex;align-items:center;gap:3px;font-size:.66rem;font-weight:600;padding:2px 7px;border-radius:999px;letter-spacing:.02em}
+  .dist-walk{background:var(--green-light);color:var(--green)}
+  .dist-nearby{background:var(--blue-light);color:var(--blue)}
+  .dist-far{background:var(--yellow-light);color:var(--yellow)}
+  .open-badge{display:inline-flex;align-items:center;gap:3px;font-size:.66rem;font-weight:600;padding:2px 7px;border-radius:999px;background:var(--green-light);color:var(--green)}
+  /* Transit tip surfaced when org is far */
+  .transit-tip{background:var(--blue-light);border:1px solid var(--blue);border-radius:10px;padding:10px 14px;font-size:.8rem;color:var(--blue);display:flex;align-items:center;gap:8px;margin-bottom:0}
+  .transit-tip strong{color:var(--ink)}
 
   .results-bar{padding:10px 16px 4px;font-size:.78rem;color:var(--ink-soft);font-weight:500}
 
@@ -161,7 +172,7 @@
   <div class="header-top">
     <div>
       <h1>Maury County Resources</h1>
-      <div class="header-sub">Columbia, TN · 2026</div>
+      <div class="header-sub">Maury County, TN · 2026</div>
     </div>
     <button class="admin-btn" id="adminToggleBtn" onclick="openLogin()">Admin</button>
   </div>
@@ -183,6 +194,7 @@
 <!-- FILTERS -->
 <div class="filters" id="filters">
   <button class="pill active" data-cat="all">All</button>
+  <button class="pill" data-cat="open-now" id="pillOpenNow">🟢 Open Now</button>
   <button class="pill" data-cat="food">🍎 Food</button>
   <button class="pill" data-cat="housing">🏠 Housing</button>
   <button class="pill" data-cat="mental">🧠 Mental Health</button>
@@ -201,7 +213,7 @@
 <!-- DESKTOP: Category tile home -->
 <div class="cat-home" id="catHome" style="display:none">
   <div class="cat-home-title">Maury County Resources</div>
-  <div class="cat-home-sub">86 resources across 11 categories — choose a category to get started.</div>
+  <div class="cat-home-sub" id="homeSubtitle">Resources across Maury County — Columbia, Spring Hill, Mt. Pleasant &amp; more. Choose a category to get started.</div>
   <div class="cat-grid" id="catGrid"></div>
 </div>
 
@@ -298,26 +310,28 @@ const ADMIN_PW = 'maury2026';
 // ── SEED DATA (2026 TCFD Resource Guide) ──
 const SEED = [
   // FOOD
-  {id:1,name:"Maury County Harvest Share Food Pantry",cat:"food",service:"Community food pantry open to all.",hours:"Call for hours",address:"419 W. 9th St., Columbia",phone:"(931) 381-4285",web:"harvestshare.com",req:"none",verified:"2026-07-01"},
-  {id:2,name:"The People's Table at Columbia First UMC",cat:"food",service:"Free hot soup kitchen meals twice a week.",hours:"Tues 5:30 pm · Fri 11:30 am",address:"222 W. 7th St., Columbia",phone:"(931) 388-3306",web:"columbiafumc.org",req:"none",verified:"2026-07-01"},
-  {id:3,name:"Pleasant Heights Baptist Church Food Pantry",cat:"food",service:"Free food pantry.",hours:"Call for hours",address:"2712 Trotwood Ave, Columbia",phone:"(931) 388-6453",web:"pleasantheights.com",req:"none",verified:"2026-07-01"},
-  {id:4,name:"First Baptist Church of Columbia Food Pantry",cat:"food",service:"Community food pantry.",hours:"Tuesdays 3:30 pm",address:"2790 Pulaski Hwy, Columbia",phone:"(931) 388-2655",web:"thefirstfamily.org",req:"none",verified:"2026-07-01"},
-  {id:5,name:"Northside Baptist Church – Feed My Sheep",cat:"food",service:"Monthly food pantry distribution.",hours:"Wednesdays 10 am–12 pm",address:"127 Theta Pike, Columbia",phone:"(931) 388-2504",web:"northsidecolumbia.org",req:"none",verified:"2026-07-01"},
-  {id:6,name:"Grace Church of the Nazarene Food Pantry",cat:"food",service:"Community food pantry. Call for current distribution times.",hours:"Call for hours",address:"2302 Highland Ave, Columbia",phone:"(931) 388-4788",web:"columbiagrace.org",req:"none",verified:"2026-07-01"},
-  {id:7,name:"GraceWorks Ministries Food Pantry",cat:"food",service:"Appointment-based food pantry serving Williamson and surrounding counties.",hours:"By appointment",address:"104 SE Pkwy, Franklin",phone:"(615) 794-9055",web:"graceworkstn.org",req:"Provide household info, income, and government program status",verified:"2026-07-01"},
-  {id:8,name:"The Well Outreach Food Pantry",cat:"food",service:"Food pantries in Spring Hill and Mt. Pleasant. Contact for details.",hours:"Call for hours",address:"5306 Main St., Spring Hill · 700 N. Main St., Mt. Pleasant",phone:"(615) 302-9355",web:"thewelloutreach.org",req:"none",verified:"2026-07-01"},
-  {id:9,name:"Catholic Charities Family Resource Center",cat:"food",service:"Food pantry plus utility/rent assistance, hygiene items, diapers, and counseling.",hours:"Mon–Fri 8am–4:30pm",address:"1501 Hatcher Ln, Columbia",phone:"(931) 223-5444",web:"cctenn.org",req:"Maury Co. resident; bring ID, SSN cards, lease or utility bill; appointment required",verified:"2026-07-01"},
-  {id:10,name:"Berea Church of Christ",cat:"food",service:"Food and clothing assistance for community members.",hours:"Call for hours",address:"746 Bear Creek Pike, Columbia",phone:"(931) 381-4056",web:"",req:"none",verified:"2026-07-01"},
-  {id:11,name:"Chef's Table at Destiny Church",cat:"food",service:"Free community meal every Saturday.",hours:"Saturdays 2–4 pm",address:"612 N. Main St., Columbia",phone:"(931) 223-8298",web:"destinychurchtn.com",req:"none",verified:"2026-07-01"},
-  {id:12,name:"Columbia TN SDA Church Food Boxes",cat:"food",service:"Monthly free food boxes.",hours:"3rd Monday monthly, 10 am–1 pm",address:"870 Mooresville Pike, Columbia",phone:"(931) 381-2600",web:"columbiatntn.adventistchurch.org",req:"none",verified:"2026-07-01"},
-  {id:13,name:"Hampshire Baptist Church Food Giveaway",cat:"food",service:"Monthly food giveaway open to all.",hours:"2nd Monday monthly",address:"4063 Hampshire Pike, Hampshire",phone:"(931) 285-2681",web:"",req:"none",verified:"2026-07-01"},
-  {id:14,name:"Cross Bridges Baptist Church – Food Distribution",cat:"food",service:"Community food distribution center.",hours:"Call for hours",address:"2881 N. Cross Bridges Rd, Columbia",phone:"(931) 698-5435",web:"",req:"none",verified:"2026-07-01"},
-  {id:15,name:"First UMC Mt. Pleasant – Food Pantry",cat:"food",service:"Monthly food pantry.",hours:"Once a month; email for dates",address:"202 S. Main St., Mt. Pleasant",phone:"(931) 379-3520",web:"1stumcmp.org",req:"none",verified:"2026-07-01"},
-  {id:16,name:"Mt. Wesley Akin Nazarene Church Food Distribution",cat:"food",service:"Monthly food distribution.",hours:"3rd Saturday monthly, 10 am–12 pm",address:"2013 New Hwy 7, Columbia",phone:"",web:"mtwesleyakinnazarene.org",req:"none",verified:"2026-07-01"},
-  {id:17,name:"West Seventh Church of Christ",cat:"food",service:"Food and community assistance. Contact for details.",hours:"Call for hours",address:"405 W. 7th St., Columbia",phone:"(931) 388-6514",web:"w7church.org",req:"none",verified:"2026-07-01"},
-  {id:18,name:"Maury County Neighborhood Service Center (SCHRA)",cat:"food",service:"Emergency food assistance (LIHEAP, CSBG) plus utility help.",hours:"Mon–Fri 8am–4:30pm",address:"5021 Trotwood Ave., Ste. 5A, Columbia",phone:"(931) 388-1173",web:"schra.us",req:"Income ≤150% federal poverty guidelines; bring ID, SSN, utility bill",verified:"2026-07-01"},
-  {id:19,name:"The Family Center",cat:"food",service:"Food pantry and USDA commodities. Also offers rent/utility assistance and medication help.",hours:"Tues–Thu 9am–4:30pm",address:"921 S. Beckett St., Columbia",phone:"(931) 388-3840",web:"familycenter.org",req:"ID required; income-based eligibility; once/month food pantry limit",verified:"2026-07-01"},
-  {id:20,name:"211 Tennessee",cat:"food",service:"Free 24/7 information and referral line for food, shelter, utilities, counseling, childcare, and more.",hours:"24/7",address:"Statewide",phone:"211",web:"211.org",req:"none",verified:"2026-07-01"},
+  {id:1,name:"Maury County Harvest Share Food Pantry",cat:"food",service:"Community food pantry open to all.",hours:"Call for hours",address:"419 W. 9th St., Columbia",phone:"(931) 381-4285",web:"harvestshare.com",req:"none",verified:"2026-07-01",lat:35.6148,lng:-87.0344},
+  {id:2,name:"The People's Table at Columbia First UMC",cat:"food",service:"Free hot soup kitchen meals twice a week.",hours:"Tues 5:30 pm · Fri 11:30 am",address:"222 W. 7th St., Columbia",phone:"(931) 388-3306",web:"columbiafumc.org",req:"none",verified:"2026-07-01",lat:35.6167,lng:-87.0376,schedule:[{days:[2],open:"17:30",close:"19:00"},{days:[5],open:"11:30",close:"13:30"}]},
+  {id:3,name:"Pleasant Heights Baptist Church Food Pantry",cat:"food",service:"Free food pantry.",hours:"Call for hours",address:"2712 Trotwood Ave, Columbia",phone:"(931) 388-6453",web:"pleasantheights.com",req:"none",verified:"2026-07-01",lat:35.6102,lng:-87.0152},
+  {id:4,name:"First Baptist Church of Columbia Food Pantry",cat:"food",service:"Community food pantry.",hours:"Tuesdays 3:30 pm",address:"2790 Pulaski Hwy, Columbia",phone:"(931) 388-2655",web:"thefirstfamily.org",req:"none",verified:"2026-07-01",lat:35.5981,lng:-86.9905,schedule:[{days:[2],open:"15:30",close:"17:30"}]},
+  {id:5,name:"Northside Baptist Church – Feed My Sheep",cat:"food",service:"Monthly food pantry distribution.",hours:"Wednesdays 10 am–12 pm",address:"127 Theta Pike, Columbia",phone:"(931) 388-2504",web:"northsidecolumbia.org",req:"none",verified:"2026-07-01",lat:35.6422,lng:-87.0461,schedule:[{days:[3],open:"10:00",close:"12:00"}]},
+  {id:6,name:"Grace Church of the Nazarene Food Pantry",cat:"food",service:"Community food pantry. Call for current distribution times.",hours:"Call for hours",address:"2302 Highland Ave, Columbia",phone:"(931) 388-4788",web:"columbiagrace.org",req:"none",verified:"2026-07-01",lat:35.6238,lng:-87.0218},
+  {id:7,name:"GraceWorks Ministries Food Pantry",cat:"food",service:"Appointment-based food pantry serving Williamson and surrounding counties. Located in Franklin.",hours:"By appointment",address:"104 SE Pkwy, Franklin",phone:"(615) 794-9055",web:"graceworkstn.org",req:"Provide household info, income, and government program status",verified:"2026-07-01"},
+  {id:8,name:"The Well Outreach Food Pantry",cat:"food",service:"Food pantries in Spring Hill and Mt. Pleasant.",hours:"Call for hours",address:"5306 Main St., Spring Hill · 700 N. Main St., Mt. Pleasant",phone:"(615) 302-9355",web:"thewelloutreach.org",req:"none",verified:"2026-07-01",lat:35.7509,lng:-86.9300},
+  {id:9,name:"Catholic Charities Family Resource Center",cat:"food",service:"Food pantry plus utility/rent assistance, hygiene items, diapers, and counseling.",hours:"Mon–Fri 8am–4:30pm",address:"1501 Hatcher Ln, Columbia",phone:"(931) 223-5444",web:"cctenn.org",req:"Maury Co. resident; bring ID, SSN cards, lease or utility bill; appointment required",verified:"2026-07-01",lat:35.5987,lng:-87.0512,schedule:[{days:[1,2,3,4,5],open:"08:00",close:"16:30"}]},
+  {id:10,name:"Berea Church of Christ",cat:"food",service:"Food and clothing assistance for community members.",hours:"Call for hours",address:"746 Bear Creek Pike, Columbia",phone:"(931) 381-4056",web:"",req:"none",verified:"2026-07-01",lat:35.6055,lng:-87.0601},
+  {id:11,name:"Chef's Table at Destiny Church",cat:"food",service:"Free community meal every Saturday.",hours:"Saturdays 2–4 pm",address:"612 N. Main St., Columbia",phone:"(931) 223-8298",web:"destinychurchtn.com",req:"none",verified:"2026-07-01",lat:35.6185,lng:-87.0393,schedule:[{days:[6],open:"14:00",close:"16:00"}]},
+  {id:12,name:"Columbia TN SDA Church Food Boxes",cat:"food",service:"Monthly free food boxes.",hours:"3rd Monday monthly, 10 am–1 pm",address:"870 Mooresville Pike, Columbia",phone:"(931) 381-2600",web:"columbiatntn.adventistchurch.org",req:"none",verified:"2026-07-01",lat:35.5945,lng:-87.0139},
+  {id:13,name:"Hampshire Baptist Church Food Giveaway",cat:"food",service:"Monthly food giveaway open to all.",hours:"2nd Monday monthly",address:"4063 Hampshire Pike, Hampshire",phone:"(931) 285-2681",web:"",req:"none",verified:"2026-07-01",lat:35.5326,lng:-87.2894},
+  {id:14,name:"Cross Bridges Baptist Church – Food Distribution",cat:"food",service:"Community food distribution center.",hours:"Call for hours",address:"2881 N. Cross Bridges Rd, Columbia",phone:"(931) 698-5435",web:"",req:"none",verified:"2026-07-01",lat:35.6512,lng:-87.0208},
+  {id:15,name:"First UMC Mt. Pleasant – Food Pantry",cat:"food",service:"Monthly food pantry.",hours:"Once a month; email for dates",address:"202 S. Main St., Mt. Pleasant",phone:"(931) 379-3520",web:"1stumcmp.org",req:"none",verified:"2026-07-01",lat:35.5348,lng:-87.0489},
+  {id:16,name:"Mt. Wesley Akin Nazarene Church Food Distribution",cat:"food",service:"Monthly food distribution.",hours:"3rd Saturday monthly, 10 am–12 pm",address:"2013 New Hwy 7, Columbia",phone:"",web:"mtwesleyakinnazarene.org",req:"none",verified:"2026-07-01",lat:35.6391,lng:-87.0732},
+  {id:17,name:"West Seventh Church of Christ",cat:"food",service:"Food and community assistance. Contact for details.",hours:"Call for hours",address:"405 W. 7th St., Columbia",phone:"(931) 388-6514",web:"w7church.org",req:"none",verified:"2026-07-01",lat:35.6169,lng:-87.0388},
+  {id:18,name:"Maury County Neighborhood Service Center (SCHRA)",cat:"food",service:"Emergency food assistance (LIHEAP, CSBG) plus utility help.",hours:"Mon–Fri 8am–4:30pm",address:"5021 Trotwood Ave., Ste. 5A, Columbia",phone:"(931) 388-1173",web:"schra.us",req:"Income ≤150% federal poverty guidelines; bring ID, SSN, utility bill",verified:"2026-07-01",lat:35.6110,lng:-87.0155,schedule:[{days:[1,2,3,4,5],open:"08:00",close:"16:30"}]},
+  {id:19,name:"The Family Center",cat:"food",service:"Food pantry and USDA commodities. Also offers rent/utility assistance and medication help.",hours:"Tues–Thu 9am–4:30pm",address:"921 S. Beckett St., Columbia",phone:"(931) 388-3840",web:"familycenter.org",req:"ID required; income-based eligibility; once/month food pantry limit",verified:"2026-07-01",lat:35.6028,lng:-87.0421,schedule:[{days:[2,3,4],open:"09:00",close:"16:30"}]},
+  {id:20,name:"211 Tennessee",cat:"food",service:"Free 24/7 information and referral line for food, shelter, utilities, counseling, childcare, and more.",hours:"24/7",address:"Statewide",phone:"211",web:"211.org",req:"none",verified:"2026-07-01",schedule:[{days:[0,1,2,3,4,5,6],open:"00:00",close:"23:59"}]},
+  {id:87,name:"Spring Hill Area Food Bank",cat:"food",service:"Community food pantry serving Spring Hill and northern Maury County.",hours:"Call for current hours",address:"Spring Hill, TN",phone:"(615) 302-9355",web:"",req:"none",verified:"2026-07-01",lat:35.7516,lng:-86.9300},
+  {id:88,name:"Mt. Pleasant Church of God Food Pantry",cat:"food",service:"Free food pantry open to Mt. Pleasant area residents.",hours:"Call for hours",address:"Mt. Pleasant, TN",phone:"(931) 379-3520",web:"",req:"none",verified:"2026-07-01",lat:35.5349,lng:-87.0488},
 
   // CLOTHING
   {id:21,name:"Common Threads",cat:"clothing",service:"Low-cost gently used clothing, furniture, and household items.",hours:"Tues–Fri 10am–5pm · Sat 10am–2pm",address:"107 Wayne St, Columbia",phone:"(931) 398-5658",web:"",req:"none",verified:"2026-07-01"},
@@ -368,8 +382,8 @@ const SEED = [
   {id:58,name:"Vocational Rehabilitation Services",cat:"career",service:"Employment support for people with disabilities. Located within TN Dept. of Human Services.",hours:"Mon–Fri 8am–4:30pm",address:"1400 College Park Dr., Columbia",phone:"(931) 380-2552",web:"tn.gov",req:"Must have a documented disability affecting employment",verified:"2026-07-01"},
 
   // TRANSPORTATION
-  {id:59,name:"Maury County Public Transportation",cat:"transit",service:"Public transit serving Maury County.",hours:"Call for routes and schedules",address:"Maury County",phone:"(931) 388-9595",web:"tnpathfinder.org",req:"none",verified:"2026-07-01"},
-  {id:60,name:"Maury United Ministries (MUMs) Rides",cat:"transit",service:"Volunteer-based rides to and from work. Call or email to schedule.",hours:"Call before noon for next-day transport",address:"812 N. Main St., Mt. Pleasant",phone:"(931) 626-6867",web:"mauryunited.org",req:"Leave name, address, destination, and time; confirmation after 5 pm",verified:"2026-07-01"},
+  {id:59,name:"Maury County Public Transportation",cat:"transit",service:"Public transit bus service covering Columbia, Spring Hill, Mt. Pleasant, and Maury County.",hours:"Mon–Fri 6am–6pm",address:"Maury County",phone:"(931) 388-9595",web:"tnpathfinder.org",req:"none",verified:"2026-07-01",lat:35.6151,lng:-87.0353,schedule:[{days:[1,2,3,4,5],open:"06:00",close:"18:00"}]},
+  {id:60,name:"Maury United Ministries (MUMs) Rides",cat:"transit",service:"Volunteer-based rides to and from work. Call or email to schedule.",hours:"Call before noon for next-day transport",address:"812 N. Main St., Mt. Pleasant",phone:"(931) 626-6867",web:"mauryunited.org",req:"Leave name, address, destination, and time; confirmation after 5 pm",verified:"2026-07-01",lat:35.5348,lng:-87.0488,schedule:[{days:[1,2,3,4,5],open:"08:00",close:"12:00"}]},
   {id:61,name:"Non-Emergency Medical Transportation (TennCare)",cat:"transit",service:"Free rides to TennCare medical appointments. Call your plan's NEMT line.",hours:"Book in advance",address:"Statewide",phone:"BlueCare: (855) 735-4660 · TennCare Select: (866) 473-7565",web:"tn.gov/tenncare",req:"Must have TennCare; advance booking required",verified:"2026-07-01"},
   {id:62,name:"Regional Transportation Authority of Middle TN",cat:"transit",service:"Carpool and vanpool services for Middle Tennessee commuters.",hours:"Call for details",address:"Regional",phone:"(615) 862-8833",web:"hub.nashville.gov",req:"none",verified:"2026-07-01"},
 
@@ -404,6 +418,12 @@ const SEED = [
   {id:84,name:"Area Agency on Aging (SETAAAD)",cat:"community",service:"Represents and serves adults 60+ and those with physical disabilities.",hours:"Call for hours",address:"101 Sam Watkins Blvd, Mt. Pleasant",phone:"(931) 379-2929",web:"setaaad.org",req:"Age 60+",verified:"2026-07-01"},
   {id:85,name:"American Red Cross of Tennessee River",cat:"community",service:"Disaster relief, emergency assistance, and community services.",hours:"Call for hours",address:"Regional",phone:"(931) 645-6401",web:"redcross.org",req:"none",verified:"2026-07-01"},
   {id:86,name:"Progressive Directions",cat:"community",service:"Services for individuals with intellectual and/or developmental disabilities.",hours:"Call for hours",address:"1209 Tradewinds Drive, Columbia",phone:"(931) 381-2114",web:"progressivedirections.org",req:"Intellectual/developmental disability diagnosis",verified:"2026-07-01"},
+  // SPRING HILL & BROADER MAURY COUNTY
+  {id:89,name:"Spring Hill Community Food Pantry",cat:"food",service:"Food pantry serving residents of Spring Hill and surrounding Maury County communities.",hours:"Call for current hours",address:"Spring Hill, TN",phone:"(615) 302-9355",web:"",req:"none",verified:"2026-07-01",lat:35.7512,lng:-86.9298},
+  {id:90,name:"Maury County Schools – Student Support Services",cat:"child",service:"Free/reduced lunch, McKinney-Vento homeless support, and wraparound services for Maury County students (Columbia, Spring Hill, Mt. Pleasant, Hampshire, Santa Fe).",hours:"Mon–Fri 7:30am–4pm (school year)",address:"501 W. 8th St., Columbia",phone:"(931) 388-8403",web:"mauryk12.org",req:"Must be enrolled in Maury County Schools",verified:"2026-07-01",lat:35.6176,lng:-87.0390},
+  {id:91,name:"Spring Hill Parks & Recreation",cat:"community",service:"Recreation programs, youth sports leagues, and community events for Spring Hill residents.",hours:"Call for program schedule",address:"2pm Town Center Blvd., Spring Hill",phone:"(931) 486-2252",web:"springhilltn.org",req:"none",verified:"2026-07-01",lat:35.7513,lng:-86.9301},
+  {id:92,name:"Maury Regional Health – Spring Hill",cat:"medical",service:"Outpatient clinic and physician offices serving northern Maury County and Spring Hill.",hours:"Call for hours",address:"Spring Hill, TN",phone:"(931) 381-1111",web:"mauryregional.com",req:"none",verified:"2026-07-01",lat:35.7508,lng:-86.9295},
+  {id:93,name:"Mt. Pleasant Community Center",cat:"community",service:"Community gathering space, youth programs, and senior activities for Mt. Pleasant area.",hours:"Call for schedule",address:"Mt. Pleasant, TN",phone:"(931) 379-3752",web:"",req:"none",verified:"2026-07-01",lat:35.5350,lng:-87.0492},
 ];
 
 // ── STATE ──
@@ -414,6 +434,62 @@ function loadData(){try{const s=localStorage.getItem('mcrd26');data=s?JSON.parse
 function saveData(){try{localStorage.setItem('mcrd26',JSON.stringify(data))}catch{}}
 function nextId(){return data.length?Math.max(...data.map(d=>d.id))+1:1}
 
+// ── GEO / OPEN-NOW ──
+const COLUMBIA_CENTER={lat:35.6151,lng:-87.0353}; // city center fallback
+let userPos=null; // {lat,lng} when acquired
+let geoRequested=false;
+
+function haversine(lat1,lng1,lat2,lng2){
+  const R=3958.8,toR=Math.PI/180;
+  const dLat=(lat2-lat1)*toR,dLng=(lng2-lng1)*toR;
+  const a=Math.sin(dLat/2)**2+Math.cos(lat1*toR)*Math.cos(lat2*toR)*Math.sin(dLng/2)**2;
+  return 2*R*Math.asin(Math.sqrt(a));
+}
+
+function distMi(d){
+  if(d.lat==null||d.lng==null)return null;
+  const pos=userPos||COLUMBIA_CENTER;
+  return haversine(pos.lat,pos.lng,d.lat,d.lng);
+}
+
+function distLabel(mi){
+  if(mi===null)return null;
+  if(mi<=1.0)return{cls:'dist-walk',label:`🚶 ${mi.toFixed(1)} mi walk`};
+  if(mi<=2.5)return{cls:'dist-nearby',label:`📍 ${mi.toFixed(1)} mi nearby`};
+  return{cls:'dist-far',label:`🚗 ${mi.toFixed(1)} mi away`};
+}
+
+function isOpenNow(d){
+  if(!d.schedule||!d.schedule.length)return false;
+  const now=new Date();
+  const day=now.getDay(); // 0=Sun,1=Mon,...,6=Sat
+  const hm=now.getHours()*60+now.getMinutes();
+  return d.schedule.some(slot=>{
+    if(!slot.days.includes(day))return false;
+    const [oh,om]=slot.open.split(':').map(Number);
+    const [ch,cm]=slot.close.split(':').map(Number);
+    return hm>=oh*60+om&&hm<=ch*60+cm;
+  });
+}
+
+function requestGeo(cb){
+  if(!navigator.geolocation){cb(null);return}
+  navigator.geolocation.getCurrentPosition(
+    pos=>{userPos={lat:pos.coords.latitude,lng:pos.coords.longitude};cb(userPos)},
+    ()=>{cb(null)},
+    {timeout:6000,maximumAge:300000}
+  );
+}
+
+function activateOpenNow(){
+  if(!geoRequested){
+    geoRequested=true;
+    requestGeo(()=>render());
+  } else {
+    render();
+  }
+}
+
 // ── HELPERS ──
 function catClass(c){return{food:'cat-food',housing:'cat-housing',mental:'cat-mental',finance:'cat-finance',child:'cat-child',clothing:'cat-clothing',career:'cat-career',transit:'cat-transit',medical:'cat-medical',veterans:'cat-veterans',community:'cat-community'}[c]||'cat-community'}
 function catLabel(c){return{food:'Food',housing:'Housing',mental:'Mental Health',finance:'Financial Aid',child:'Children',clothing:'Clothing',career:'Career',transit:'Transport',medical:'Medical',veterans:'Veterans',community:'Community'}[c]||c}
@@ -423,15 +499,23 @@ const IC={clock:`<svg width="13" height="13" fill="none" stroke="currentColor" s
 const CAT_ORDER=['food','housing','mental','finance','child','clothing','career','transit','medical','veterans','community'];
 const CAT_EMOJI={food:'🍎',housing:'🏠',mental:'🧠',finance:'💰',child:'👶',clothing:'👕',career:'💼',transit:'🚌',medical:'🏥',veterans:'🎖',community:'🤝'};
 
-function cardHTML(d,i){
+function cardHTML(d,i,opts={}){
   const ONE_YR=365*24*60*60*1000,now=Date.now();
   const stale=d.verified&&(now-new Date(d.verified).getTime())>ONE_YR;
   const ver=d.verified?new Date(d.verified).toLocaleDateString('en-US',{month:'short',year:'numeric'}):'';
   const ph=d.phone?d.phone.replace(/[^0-9+]/g,''):'';
+  // Distance badge
+  const mi=distMi(d);
+  const dl=distLabel(mi);
+  const openNow=opts.showOpen?isOpenNow(d):false;
+  const distBadge=dl?`<span class="dist-badge ${dl.cls}">${dl.label}</span>`:'';
+  const openBadge=openNow?`<span class="open-badge">🟢 Open Now</span>`:'';
   return `<div class="card${stale?' stale':''}" style="animation-delay:${Math.min(i*.04,.4)}s">
     <div class="card-top">
       <div class="card-name">${d.name}</div>
       <div class="card-badges">
+        ${openBadge}
+        ${distBadge}
         <span class="cat-badge ${catClass(d.cat)}">${catLabel(d.cat)}</span>
         ${isAdmin?`<button class="card-edit-btn" onclick="openForm(${d.id})">Edit</button>`:''}
       </div>
@@ -470,6 +554,8 @@ function drillInto(cat){
 function renderTileHome(){
   const counts={};
   data.forEach(d=>{counts[d.cat]=(counts[d.cat]||0)+1});
+  const sub=document.getElementById('homeSubtitle');
+  if(sub)sub.textContent=`${data.length} resources across Maury County — Columbia, Spring Hill, Mt. Pleasant & more. Choose a category to get started.`;
   document.getElementById('catGrid').innerHTML=CAT_ORDER.map(c=>{
     const n=counts[c]||0;
     return `<div class="cat-tile" onclick="drillInto('${c}')">
@@ -481,11 +567,18 @@ function renderTileHome(){
   }).join('');
 }
 
+function transitTipHTML(){
+  return `<div class="transit-tip">
+    🚌 <span><strong>Need a ride?</strong> Maury County Public Transit: <a href="tel:9313889595">(931) 388-9595</a> · MUMs Rides (work trips): <a href="tel:9316266867">(931) 626-6867</a></span>
+  </div>`;
+}
+
 function render(){
   const isDesktop=window.innerWidth>=900;
   const q=query.toLowerCase();
   const searching=!!q;
-  const catFiltered=activecat!=='all';
+  const openNowMode=activecat==='open-now';
+  const catFiltered=activecat!=='all'&&!openNowMode;
 
   // Show/hide containers
   const homeEl=document.getElementById('catHome');
@@ -493,7 +586,7 @@ function render(){
   const listEl=document.getElementById('cards');
   const resBar=document.getElementById('results-bar');
 
-  if(isDesktop&&!searching&&!catFiltered&&desktopView==='home'){
+  if(isDesktop&&!searching&&!catFiltered&&!openNowMode&&desktopView==='home'){
     // Desktop home: tile grid
     homeEl.style.display='block';
     viewEl.style.display='none';
@@ -512,20 +605,53 @@ function render(){
     resBar.textContent='';
     document.getElementById('catViewTitle').innerHTML=`${CAT_EMOJI[activecat]||''} ${catLabel(activecat)} <span class="cat-badge ${catClass(activecat)}" style="margin-left:6px;font-size:.7rem">${f.length}</span>`;
     document.getElementById('catViewCards').innerHTML=f.length
-      ?f.map((d,i)=>cardHTML(d,i)).join('')
+      ?f.map((d,i)=>cardHTML(d,i,{showOpen:false})).join('')
       :`<div class="empty"><div class="empty-icon">📭</div><h3>No entries yet</h3><p>Add one via Admin.</p></div>`;
     return;
   }
 
-  // Mobile or search mode: plain card list
+  // Mobile or search mode or Open Now mode: plain card list
   homeEl.style.display='none';
   viewEl.style.display='none';
   listEl.style.display='flex';
 
-  const f=data.filter(d=>(activecat==='all'||d.cat===activecat)&&(!q||[d.name,d.service,d.address,d.req,d.phone].join(' ').toLowerCase().includes(q)));
+  let f;
+  if(openNowMode){
+    // Filter to orgs with schedule data, check if open right now
+    f=data.filter(d=>isOpenNow(d));
+    // Sort by distance (ascending); no-location orgs go last
+    f.sort((a,b)=>{
+      const da=distMi(a),db=distMi(b);
+      if(da===null&&db===null)return 0;
+      if(da===null)return 1;
+      if(db===null)return -1;
+      return da-db;
+    });
+    const locLabel=userPos?'near you':'near Columbia'
+    resBar.textContent=f.length?`${f.length} open right now · sorted by distance ${locLabel}`:'';
+    if(!f.length){
+      listEl.innerHTML=`<div class="empty"><div class="empty-icon">🟢</div><h3>Nothing with known hours is open right now</h3><p>Try calling a resource directly — many operate on flexible schedules.</p></div>`;
+      return;
+    }
+    // Build cards, injecting transit tip after any "far" card
+    const TRANSIT_IDS=new Set([59,60,61,62]);
+    let html='';
+    f.forEach((d,i)=>{
+      html+=cardHTML(d,i,{showOpen:true});
+      const mi=distMi(d);
+      // Surface transit tip after first non-transit "far" org
+      if(mi!==null&&mi>2.5&&!TRANSIT_IDS.has(d.id)&&!html.includes('transit-tip')){
+        html+=transitTipHTML();
+      }
+    });
+    listEl.innerHTML=html;
+    return;
+  }
+
+  f=data.filter(d=>(activecat==='all'||d.cat===activecat)&&(!q||[d.name,d.service,d.address,d.req,d.phone].join(' ').toLowerCase().includes(q)));
   resBar.textContent=f.length?`${f.length} resource${f.length!==1?'s':''} found`:'';
   if(!f.length){listEl.innerHTML=`<div class="empty"><div class="empty-icon">🔍</div><h3>No results found</h3><p>Try a different search or category.</p></div>`;return}
-  listEl.innerHTML=f.map((d,i)=>cardHTML(d,i)).join('');
+  listEl.innerHTML=f.map((d,i)=>cardHTML(d,i,{showOpen:false})).join('');
 }
 
 // ── FILTER PILLS ──
@@ -541,7 +667,9 @@ document.getElementById('filters').addEventListener('click',e=>{
   p.classList.add('active');
   activecat=p.dataset.cat;
   query='';document.getElementById('search').value='';
-  if(activecat==='all'){desktopView='home';}else{desktopView='category';}
+  if(activecat==='all'){desktopView='home';}
+  else if(activecat==='open-now'){desktopView='category';activateOpenNow();return;}
+  else{desktopView='category';}
   render();
 });
 
