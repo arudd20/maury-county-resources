@@ -28,6 +28,17 @@
   .header-sub{font-size:.7rem;font-weight:300;color:#a89880;letter-spacing:.08em;text-transform:uppercase;margin-top:2px}
   .admin-btn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#a89880;font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:500;padding:5px 12px;border-radius:6px;cursor:pointer;letter-spacing:.04em;text-transform:uppercase;transition:all .15s;flex-shrink:0}
   .admin-btn:hover{background:rgba(255,255,255,.18);color:#fff}
+  .font-toggle{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#a89880;font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:600;padding:5px 10px;border-radius:6px;cursor:pointer;transition:all .15s;flex-shrink:0;letter-spacing:.02em}
+  .font-toggle:hover{background:rgba(255,255,255,.18);color:#fff}
+  .font-toggle.active{background:rgba(255,255,255,.22);color:#fff;border-color:rgba(255,255,255,.4)}
+  /* Large text mode */
+  body.large-text .card-name{font-size:1.25rem}
+  body.large-text .card-service{font-size:1rem}
+  body.large-text .meta-row{font-size:.9rem}
+  body.large-text .card{padding:20px}
+  body.large-text .pill{font-size:.82rem;padding:7px 16px}
+  body.large-text .cat-tile-name{font-size:1.15rem}
+  body.large-text .cat-tile-count{font-size:.85rem}
   .search-wrap{position:relative}
   .search-wrap svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#a89880;pointer-events:none}
   #search{width:100%;padding:11px 12px 11px 38px;border-radius:8px;border:none;background:rgba(255,255,255,.1);color:#fff;font-family:'DM Sans',sans-serif;font-size:.95rem;outline:none;transition:background .2s}
@@ -90,11 +101,11 @@
     .cards{padding:4px 12px 80px}
   }
 
-  .card{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);padding:20px;box-shadow:var(--shadow);animation:fadeUp .25s ease both}
+  .card{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);padding:16px;box-shadow:var(--shadow);animation:fadeUp .25s ease both}
   .card.stale{border-left:3px solid var(--yellow)}
   @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
   .card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px}
-  .card-name{font-family:'DM Serif Display',serif;font-size:1.2rem;line-height:1.25;color:var(--ink);flex:1}
+  .card-name{font-family:'DM Serif Display',serif;font-size:1.05rem;line-height:1.25;color:var(--ink);flex:1}
   .card-badges{display:flex;align-items:center;gap:6px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end}
   .cat-badge{padding:3px 9px;border-radius:999px;font-size:.68rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
   .cat-food{background:var(--yellow-light);color:var(--yellow)}
@@ -108,9 +119,9 @@
   .cat-clothing{background:#f5e8f0;color:#8f2a6b}
   .cat-medical{background:#e8f5f5;color:#2a7a7a}
   .cat-veterans{background:#f5f0e0;color:#7a5a1a}
-  .card-service{font-size:.92rem;color:var(--ink-soft);line-height:1.5;margin-bottom:12px}
-  .card-meta{display:flex;flex-direction:column;gap:5px}
-  .meta-row{display:flex;align-items:flex-start;gap:6px;font-size:.83rem;color:var(--ink-soft)}
+  .card-service{font-size:.85rem;color:var(--ink-soft);line-height:1.45;margin-bottom:10px}
+  .card-meta{display:flex;flex-direction:column;gap:4px}
+  .meta-row{display:flex;align-items:flex-start;gap:6px;font-size:.78rem;color:var(--ink-soft)}
   .meta-row svg{flex-shrink:0;margin-top:1px;color:var(--accent)}
   .meta-label{font-weight:600;color:var(--ink);margin-right:2px}
   .req-none{display:inline-block;background:var(--green-light);color:var(--green);font-size:.68rem;font-weight:600;padding:2px 8px;border-radius:999px;margin-top:2px}
@@ -173,7 +184,10 @@
       <h1>Maury County Resources</h1>
       <div class="header-sub">Maury County, TN · 2026</div>
     </div>
-    <button class="admin-btn" id="adminToggleBtn" onclick="openLogin()">Admin</button>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button class="font-toggle" id="fontToggleBtn" onclick="toggleFontSize()" title="Increase text size">A+</button>
+      <button class="admin-btn" id="adminToggleBtn" onclick="openLogin()">Admin</button>
+    </div>
   </div>
   <div class="search-wrap">
     <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
@@ -800,6 +814,16 @@ window.addEventListener('resize',()=>{
 });
 
 // ── INIT ──
+// ── FONT SIZE TOGGLE ──
+function toggleFontSize(){
+  const large=document.body.classList.toggle('large-text');
+  document.getElementById('fontToggleBtn').classList.toggle('active',large);
+  try{localStorage.setItem('mcrd26-largefont',large?'1':'')}catch{}
+}
+(function initFont(){
+  try{if(localStorage.getItem('mcrd26-largefont')==='1'){document.body.classList.add('large-text');document.getElementById('fontToggleBtn').classList.add('active')}}catch{}
+})();
+
 loadData();render();
 // Silently request location on load so distance badges are ready when user browses
 ensureGeo();
